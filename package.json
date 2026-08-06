@@ -1,0 +1,13 @@
+{
+  "name": "dockorbit-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DockOrbit monorepo root package",
+  "main": "backend/src/server.js",
+  "type": "module",
+  "scripts": {
+    "postinstall": "cd backend && npm install",
+    "start": "node backend/src/server.js",
+    "build": "echo 'No root build required'"
+  }
+}

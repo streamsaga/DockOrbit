@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: dockorbit-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node src/server.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: USE_MOCK_DATA
+        value: "false"
