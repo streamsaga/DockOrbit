@@ -258,15 +258,36 @@ export async function getTopComments(videoIds, maxPerVideo = 15, maxVideos = 5) 
  * them ranked best-first. This is the main entry point used by the
  * /api/playlists/search route.
  */
+import { searchMockPlaylists } from "../data/mockChannels.js";
+
+function useMockData() {
+  return process.env.USE_MOCK_DATA !== "false";
+}
+
 export async function findPlaylists(query, pageToken = "", language = "") {
   const cacheKey = `playlists:${query.toLowerCase()}:${pageToken}:${language}`;
   const cached = cache.get(cacheKey);
   if (cached) return cached;
 
-  const { playlistIds, nextPageToken } = await searchPlaylists(query, 10, pageToken, language);
-  if (playlistIds.length === 0) {
-    return { playlists: [], nextPageToken: null };
+  if (useMockData()) {
+    return {
+      playlists: searchMockPlaylists(query),
+      nextPageToken: null,
+      languageFilterApplied: false,
+      languageRequested: language || null,
+    };
   }
+
+  try {
+    const { playlistIds, nextPageToken } = await searchPlaylists(query, 10, pageToken, language);
+    if (playlistIds.length === 0) {
+      return {
+        playlists: searchMockPlaylists(query),
+        nextPageToken: null,
+        languageFilterApplied: false,
+        languageRequested: language || null,
+      };
+    }
 
   const playlistDetails = await getPlaylistDetails(playlistIds);
 
@@ -362,4 +383,14 @@ export async function findPlaylists(query, pageToken = "", language = "") {
   };
   cache.set(cacheKey, payload);
   return payload;
+  } catch (err) {
+    console.warn(`YouTube API playlist search failed for query "${query}", falling back to mock search:`, err.message);
+    const fallback = searchMockPlaylists(query);
+    return {
+      playlists: fallback,
+      nextPageToken: null,
+      languageFilterApplied: false,
+      languageRequested: language || null,
+    };
+  }
 }

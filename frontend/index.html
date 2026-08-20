@@ -2,16 +2,89 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DockOrbit — Find channels and playlists worth watching</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    
+    <!-- Primary SEO Meta Tags -->
+    <title>DockOrbit — Discover Top Verified YouTube Channels & Curated Playlists</title>
+    <meta name="title" content="DockOrbit — Discover Top Verified YouTube Channels & Curated Playlists" />
+    <meta name="description" content="DockOrbit helps you find high-quality YouTube channels, curated video playlists, and analyze channel trust scores. Stop searching and start watching top creator content." />
+    <meta name="keywords" content="YouTube channels, playlist finder, channel trust score, best YouTube creators, YouTube recommendation, learning playlists, DockOrbit" />
+    <meta name="author" content="DockOrbit" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://dockorbit.com/" />
+    
+    <!-- Theme & Mobile Specific -->
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="DockOrbit" />
+    
+    <!-- Open Graph / Facebook / WhatsApp / LinkedIn -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://dockorbit.com/" />
+    <meta property="og:title" content="DockOrbit — Discover Top Verified YouTube Channels & Curated Playlists" />
+    <meta property="og:description" content="Find channels and playlists worth watching. Calculate trust scores, discover top tech, education, and entertainment creators on DockOrbit." />
+    <meta property="og:image" content="https://dockorbit.com/favicon.jpg" />
+    <meta property="og:site_name" content="DockOrbit" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://dockorbit.com/" />
+    <meta name="twitter:title" content="DockOrbit — Discover Top Verified YouTube Channels & Curated Playlists" />
+    <meta name="twitter:description" content="Find channels and playlists worth watching. Calculate trust scores and discover top creators on DockOrbit." />
+    <meta name="twitter:image" content="https://dockorbit.com/favicon.jpg" />
+    <meta name="twitter:site" content="@DockOrbit" />
+
+    <!-- Favicon & Icons -->
     <link rel="icon" type="image/jpeg" href="/favicon.jpg" />
+    <link rel="apple-touch-icon" href="/favicon.jpg" />
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap"
       rel="stylesheet"
     />
+    
+    <!-- Google Auth Client -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Structured Data (JSON-LD Schema) for Google Search Engine -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://dockorbit.com/#website",
+            "url": "https://dockorbit.com/",
+            "name": "DockOrbit",
+            "description": "Find channels and playlists worth watching",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://dockorbit.com/?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://dockorbit.com/#organization",
+            "name": "DockOrbit",
+            "url": "https://dockorbit.com/",
+            "logo": "https://dockorbit.com/favicon.jpg"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "DockOrbit",
+            "operatingSystem": "All",
+            "applicationCategory": "EntertainmentApplication",
+            "description": "Discover verified YouTube channels and curated video playlists with channel trust score analyzer."
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -4,6 +4,10 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
+
 import channelsRouter from "./routes/channels.js";
 import authRouter from "./routes/auth.js";
 import bookmarksRouter from "./routes/bookmarks.js";
@@ -18,17 +22,21 @@ import { generalApiLimiter } from "./middleware/rateLimiters.js";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDistPath = path.resolve(__dirname, "../../frontend/dist");
+
 // If deployed behind a reverse proxy (Render, Railway, Heroku, nginx,
 // etc.), this is required for express-rate-limit and req.ip to see the
 // REAL client IP instead of the proxy's IP for every request. Leave
 // unset for plain local development.
-if (process.env.TRUST_PROXY === "true") {
+if (process.env.TRUST_PROXY !== "false") {
   app.set("trust proxy", 1);
 }
 
 // Sets a battery of standard security-related HTTP response headers
 // (X-Content-Type-Options, X-Frame-Options, etc.) with sane defaults.
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 
 // CORS_ORIGIN restricts which frontend domain(s) may call this API.
 // Falls back to allowing all origins (fine for local development) if
@@ -63,9 +71,18 @@ app.use("/api/playlists", playlistsRouter);
 app.use("/api/suggestions", suggestionsRouter);
 app.use("/api/lookup", lookupRouter);
 
-app.get("/", (req, res) => {
-  res.send("YouTube Discovery API is running. Try /api/categories or /api/channels?category=cooking");
-});
+// Serve static frontend build if present (for single-service Render/PaaS deploys)
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) return next();
+    res.sendFile(path.join(frontendDistPath, "index.html"));
+  });
+} else {
+  app.get("/", (req, res) => {
+    res.send("YouTube Discovery API is running. Try /api/categories or /api/channels?category=cooking");
+  });
+}
 
 async function start() {
   try {

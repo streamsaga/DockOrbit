@@ -1,12 +1,66 @@
 services:
+  # ---------------------------------------------------------------------------
+  # Backend Web Service (Node.js Express API)
+  # ---------------------------------------------------------------------------
   - type: web
     name: dockorbit-backend
     env: node
+    plan: free
     rootDir: backend
     buildCommand: npm install
     startCommand: node src/server.js
+    healthCheckPath: /api/categories
     envVars:
       - key: PORT
         value: 10000
+      - key: TRUST_PROXY
+        value: "true"
       - key: USE_MOCK_DATA
         value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGIN
+        fromService:
+          type: web
+          name: dockorbit-frontend
+          property: url
+      - key: JWT_SECRET
+        generateValue: true
+      - key: YOUTUBE_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+
+  # ---------------------------------------------------------------------------
+  # Frontend Static Site (React + Vite SPA)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: dockorbit-frontend
+    env: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://dockorbit-backend.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
+

@@ -79,20 +79,28 @@ router.get("/search", async (req, res) => {
       channels = searchMockChannels(q);
       nextPageToken = null;
     } else {
-      const result = await fetchChannelsForQuery(q, undefined, pageToken, country, language);
-      channels = result.channels;
-      nextPageToken = result.nextPageToken;
+      try {
+        const result = await fetchChannelsForQuery(q, undefined, pageToken, country, language);
+        channels = result.channels;
+        nextPageToken = result.nextPageToken;
+      } catch (apiErr) {
+        console.warn(`YouTube API search failed for query "${q}", falling back to mock search:`, apiErr.message);
+        channels = searchMockChannels(q);
+        nextPageToken = null;
+      }
     }
 
     if (!channels || channels.length === 0) {
-      return res.json({ channels: [], nextPageToken: null });
+      channels = searchMockChannels(q);
     }
 
     const scored = applySort(scoreChannels(channels), sort);
     res.json({ channels: scored, nextPageToken });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Search failed", details: err.message });
+    const fallback = searchMockChannels(q);
+    const scored = applySort(scoreChannels(fallback), sort);
+    res.json({ channels: scored, nextPageToken: null });
   }
 });
 

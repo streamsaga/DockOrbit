@@ -9,9 +9,14 @@ import pg from "pg";
 
 const { Pool } = pg;
 
+const isLocal =
+  !process.env.DATABASE_URL ||
+  process.env.DATABASE_URL.includes("localhost") ||
+  process.env.DATABASE_URL.includes("127.0.0.1");
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: false, // explicit, so nothing (e.g. a stray PGSSLMODE env var) can force SSL on
+  ssl: isLocal ? false : { rejectUnauthorized: false },
 });
 
 // Creates the tables if they don't already exist. Safe to run every

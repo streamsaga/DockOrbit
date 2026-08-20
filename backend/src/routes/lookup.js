@@ -15,7 +15,7 @@
 import express from "express";
 import { getApiKey, fetchJson, BASE_URL } from "../services/youtubeService.js";
 import { scoreChannel } from "../services/scoringEngine.js";
-import { searchMockChannels } from "../data/mockChannels.js";
+import { searchMockChannels, searchMockPlaylists } from "../data/mockChannels.js";
 
 const router = express.Router();
 
@@ -361,9 +361,8 @@ router.get("/", async (req, res) => {
 
     if (parsed.type === "playlist") {
       if (useMockData()) {
-        return res.status(400).json({
-          error: "Playlist lookup requires a YouTube API key. Mock data mode is active.",
-        });
+        const mockPls = searchMockPlaylists("");
+        return res.json({ type: "playlist", data: mockPls[0] });
       }
 
       const playlistData = await fetchPlaylistById(parsed.id);

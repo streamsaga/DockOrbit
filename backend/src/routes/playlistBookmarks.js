@@ -49,7 +49,7 @@ router.post("/", async (req, res) => {
 
     await pool.query(
       `INSERT INTO bookmarks (user_id, channel_id, channel_data, item_type)
-       VALUES ($1, $2, $3, 'playlist')
+       VALUES ($1, $2, $3::jsonb, 'playlist')
        ON CONFLICT (user_id, channel_id) DO NOTHING`,
       [req.user.id, playlist.id, serialized]
     );

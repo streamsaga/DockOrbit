@@ -554,3 +554,110 @@ export function searchMockChannels(query) {
       ch.name.toLowerCase().includes(q) || ch.description.toLowerCase().includes(q)
   );
 }
+
+export const mockPlaylists = [
+  {
+    id: "pl_mock_1",
+    title: "Complete Binary Trees & Data Structures Course",
+    description: "Master Binary Trees, BSTs, AVL Trees, and Segment Trees from scratch with step-by-step visualizations and code implementations.",
+    channelTitle: "TechWithTim",
+    thumbnail: "https://images.unsplash.com/photo-1516116211223-4c7141952838?w=300&auto=format&fit=crop&q=80",
+    videoCount: 28,
+    estimatedTotalViews: 1850000,
+    estimatedTotalSeconds: 36000,
+    lastUpdated: "2024-06-10T10:00:00.000Z",
+    publishedAt: "2023-02-15T12:00:00.000Z",
+    difficulty: "Beginner",
+    language: "English",
+    languageCode: "en",
+    playlistUrl: "https://www.youtube.com/playlist?list=PL_mock_1",
+    score: 95,
+    scoreBreakdown: { coverage: 96, engagement: 94, recency: 95, completeness: 98, popularity: 92 },
+  },
+  {
+    id: "pl_mock_2",
+    title: "React JS Full Course 2024 - Beginner to Advanced",
+    description: "Learn React JS with modern Hooks, Context API, Redux Toolkit, and full-stack projects.",
+    channelTitle: "Academind",
+    thumbnail: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=300&auto=format&fit=crop&q=80",
+    videoCount: 42,
+    estimatedTotalViews: 3200000,
+    estimatedTotalSeconds: 54000,
+    lastUpdated: "2024-07-01T12:00:00.000Z",
+    publishedAt: "2023-04-10T10:00:00.000Z",
+    difficulty: "Intermediate",
+    language: "English",
+    languageCode: "en",
+    playlistUrl: "https://www.youtube.com/playlist?list=PL_mock_2",
+    score: 96,
+    scoreBreakdown: { coverage: 98, engagement: 95, recency: 98, completeness: 95, popularity: 94 },
+  },
+  {
+    id: "pl_mock_3",
+    title: "Machine Learning & AI Masterclass",
+    description: "Comprehensive Python machine learning course covering Scikit-Learn, TensorFlow, Neural Networks, and NLP.",
+    channelTitle: "StatQuest with Josh Starmer",
+    thumbnail: "https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?w=300&auto=format&fit=crop&q=80",
+    videoCount: 35,
+    estimatedTotalViews: 2400000,
+    estimatedTotalSeconds: 43200,
+    lastUpdated: "2024-05-20T14:00:00.000Z",
+    publishedAt: "2022-11-05T09:00:00.000Z",
+    difficulty: "Advanced",
+    language: "English",
+    languageCode: "en",
+    playlistUrl: "https://www.youtube.com/playlist?list=PL_mock_3",
+    score: 93,
+    scoreBreakdown: { coverage: 94, engagement: 96, recency: 90, completeness: 92, popularity: 93 },
+  },
+  {
+    id: "pl_mock_4",
+    title: "Class 12 Physics Complete Chapterwise Revision",
+    description: "Detailed concept explanations and numerical problem solving for Class 12 Physics.",
+    channelTitle: "Physics Galaxy",
+    thumbnail: "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=300&auto=format&fit=crop&q=80",
+    videoCount: 50,
+    estimatedTotalViews: 4100000,
+    estimatedTotalSeconds: 72000,
+    lastUpdated: "2024-04-15T11:00:00.000Z",
+    publishedAt: "2022-09-01T08:00:00.000Z",
+    difficulty: "Intermediate",
+    language: "Hindi",
+    languageCode: "hi",
+    playlistUrl: "https://www.youtube.com/playlist?list=PL_mock_4",
+    score: 92,
+    scoreBreakdown: { coverage: 95, engagement: 91, recency: 88, completeness: 94, popularity: 92 },
+  },
+  {
+    id: "pl_mock_5",
+    title: "Organic Chemistry Zero to Hero Series",
+    description: "Complete reaction mechanisms, naming conventions, and practice problems.",
+    channelTitle: "Khan Academy",
+    thumbnail: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=300&auto=format&fit=crop&q=80",
+    videoCount: 30,
+    estimatedTotalViews: 1900000,
+    estimatedTotalSeconds: 28800,
+    lastUpdated: "2024-03-01T09:00:00.000Z",
+    publishedAt: "2023-01-20T10:00:00.000Z",
+    difficulty: "Beginner",
+    language: "English",
+    languageCode: "en",
+    playlistUrl: "https://www.youtube.com/playlist?list=PL_mock_5",
+    score: 90,
+    scoreBreakdown: { coverage: 92, engagement: 89, recency: 87, completeness: 90, popularity: 91 },
+  },
+];
+
+export function searchMockPlaylists(query = "") {
+  if (!query || !query.trim()) return mockPlaylists;
+  const q = query.toLowerCase();
+  const matched = mockPlaylists.filter(
+    (p) => p.title.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.channelTitle.toLowerCase().includes(q)
+  );
+  if (matched.length > 0) return matched;
+  // If no direct keyword match, return all mock playlists custom-formatted for query
+  return mockPlaylists.map((p) => ({
+    ...p,
+    title: `${query.trim()} - ${p.title}`,
+  }));
+}

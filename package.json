@@ -3,11 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "description": "DockOrbit monorepo root package",
-  "main": "backend/src/server.js",
+  "main": "src/server.js",
   "type": "module",
   "scripts": {
     "postinstall": "cd backend && npm install",
-    "start": "node backend/src/server.js",
-    "build": "echo 'No root build required'"
+    "start": "node src/server.js",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "npx concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build": "cd frontend && npm install && npm run build",
+    "build:all": "cd backend && npm install && cd ../frontend && npm install && npm run build"
   }
 }

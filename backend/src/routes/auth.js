@@ -307,7 +307,9 @@ router.post("/google", authLimiter, async (req, res) => {
     const googleEmail = normalizeEmail(payload.email);
 
     const existing = await pool.query(
-      "SELECT id, name, email, email_verified FROM users WHERE google_id = $1 OR email = $2",
+      `SELECT id, name, username, email, email_verified,
+              avatar_data AS "avatarData", favorite_category AS "favoriteCategory"
+       FROM users WHERE google_id = $1 OR email = $2`,
       [payload.sub, googleEmail]
     );
 
@@ -320,7 +322,9 @@ router.post("/google", authLimiter, async (req, res) => {
       await pool.query("UPDATE users SET google_id = $1 WHERE id = $2", [payload.sub, user.id]);
     } else {
       const result = await pool.query(
-        "INSERT INTO users (name, email, google_id, email_verified) VALUES ($1, $2, $3, false) RETURNING id, name, email",
+        `INSERT INTO users (name, email, google_id, email_verified)
+         VALUES ($1, $2, $3, false)
+         RETURNING id, name, username, email, avatar_data AS "avatarData", favorite_category AS "favoriteCategory"`,
         [payload.name, googleEmail, payload.sub]
       );
       user = result.rows[0];
