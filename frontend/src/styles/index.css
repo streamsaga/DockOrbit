@@ -1708,141 +1708,6 @@ html, body {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .app-shell {
-    padding-bottom: 100px;
-  }
-
-  .page-content,
-  .subnav {
-    padding: 0 16px;
-  }
-
-  .navbar-inner {
-    padding: 12px 16px;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .navbar-header-left {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .mobile-menu-toggle {
-    display: flex;
-  }
-
-  .navbar-pages {
-    display: none;
-    width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
-  }
-
-  .navbar-pages.mobile-open {
-    display: flex;
-  }
-
-  .navbar-page-link {
-    padding: 10px 14px;
-    font-size: 14px;
-    border-radius: 8px;
-    text-align: left;
-    width: 100%;
-  }
-
-  .navbar-brand {
-    font-size: 19px;
-  }
-
-  .navbar-search {
-    order: 3;
-    width: 100%;
-  }
-
-  .navbar-account {
-    order: 2;
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .profile-name {
-    display: none; /* keep avatar only on very small screens */
-  }
-
-  .subnav {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-
-  .saved-nav-btn {
-    align-self: flex-start;
-  }
-
-  .category-row {
-    gap: 8px;
-  }
-
-  .category-chip {
-    padding: 8px 14px;
-    font-size: 13px;
-  }
-
-  .toolbar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .channel-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .channel-card {
-    padding: 16px;
-  }
-
-  .card-actions {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .compare-bar {
-    left: 16px;
-    right: 16px;
-    transform: none;
-    width: auto;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 12px 16px;
-  }
-
-  .compare-modal {
-    padding: 16px;
-    max-height: 90vh;
-  }
-
-  .compare-grid {
-    grid-template-columns: 110px repeat(auto-fit, minmax(90px, 1fr)) !important;
-    font-size: 12px;
-  }
-
-  .compare-cell {
-    padding: 8px;
-  }
-
-  .compare-avatar {
-    width: 36px;
-    height: 36px;
-  }
-}
-
 @media (max-width: 400px) {
   .stat-row {
     gap: 10px;
@@ -3684,5 +3549,144 @@ a,
     width: 100%;
     justify-content: center;
     padding: 12px;
+  }
+}
+
+/* ===== Global Responsive Overrides ===== */
+@media (max-width: 768px) {
+  .app-shell {
+    padding-bottom: 100px;
+  }
+
+  .page-content,
+  .subnav {
+    padding: 0 16px;
+  }
+
+  .navbar-inner {
+    padding: 12px 16px;
+    gap: 12px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .navbar-header-left {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .mobile-menu-toggle {
+    display: flex !important;
+  }
+
+  header.navbar .navbar-pages {
+    display: none !important;
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border, rgba(0, 0, 0, 0.1));
+  }
+
+  header.navbar .navbar-pages.mobile-open {
+    display: flex !important;
+  }
+
+  .navbar-page-link {
+    padding: 10px 14px;
+    font-size: 14px;
+    border-radius: 8px;
+    text-align: left;
+    width: 100%;
+  }
+
+  .navbar-brand {
+    font-size: 19px;
+  }
+
+  .navbar-search {
+    width: 100%;
+  }
+
+  .navbar-account {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .profile-name {
+    display: none; /* keep avatar only on small mobile screens */
+  }
+
+  .subnav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .saved-nav-btn {
+    align-self: flex-start;
+  }
+
+  .category-row {
+    gap: 8px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .category-chip {
+    padding: 8px 14px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .channel-grid,
+  .playlist-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px;
+  }
+
+  .channel-card,
+  .playlist-card {
+    padding: 16px;
+  }
+
+  .card-actions {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .compare-bar {
+    left: 16px;
+    right: 16px;
+    transform: none;
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 12px 16px;
+  }
+
+  .compare-modal,
+  .auth-modal,
+  .playlist-compare-modal {
+    padding: 16px;
+    max-height: 90vh;
+    max-width: 95vw !important;
+    width: 95vw !important;
+  }
+
+  .compare-grid {
+    grid-template-columns: 110px repeat(auto-fit, minmax(90px, 1fr)) !important;
+    font-size: 12px;
   }
 }
