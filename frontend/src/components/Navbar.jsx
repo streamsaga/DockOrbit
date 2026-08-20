@@ -16,7 +16,7 @@ export default function Navbar({
   user,
   onLoginClick,
   onLogout,
-  searchPlaceholder,
+  searchPlaceholder = "Search any topic...",
 }) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -26,9 +26,7 @@ export default function Navbar({
   return (
     <header className="navbar">
       <div className="navbar-inner">
-        <div className="navbar-header-left">
-          <Link to="/" className="navbar-brand" onClick={closeMenu}>DockOrbit</Link>
-
+        <div className="navbar-top-row">
           <button
             className="mobile-menu-toggle"
             aria-label="Toggle navigation menu"
@@ -48,6 +46,41 @@ export default function Navbar({
               </svg>
             )}
           </button>
+
+          <Link to="/" className="navbar-brand" onClick={closeMenu}>
+            <span className="brand-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.2">
+                <circle cx="12" cy="12" r="9" strokeOpacity="0.4" />
+                <path d="M12 3a9 9 0 0 1 9 9" strokeLinecap="round" />
+              </svg>
+            </span>
+            DockOrbit
+          </Link>
+
+          <div className="navbar-account">
+            {user ? (
+              <div className="profile-menu">
+                <button className="profile-avatar-btn" title={user.name}>
+                  {user.avatarData ? (
+                    <img src={user.avatarData} alt={user.name} className="profile-avatar-img" />
+                  ) : (
+                    getInitials(user.name)
+                  )}
+                </button>
+                <button className="profile-logout-btn" onClick={() => { closeMenu(); onLogout(); }}>
+                  Log out
+                </button>
+              </div>
+            ) : (
+              <button className="navbar-login-icon-btn" onClick={() => { closeMenu(); onLoginClick(); }} aria-label="Log in">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span className="login-btn-text">Log in / Sign up</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <nav className={`navbar-pages ${mobileMenuOpen ? "mobile-open" : ""}`}>
@@ -76,28 +109,6 @@ export default function Navbar({
 
         <div className="navbar-search">
           <SearchBar onSearch={onSearch} onClear={onClear} placeholder={searchPlaceholder} />
-        </div>
-
-        <div className="navbar-account">
-          {user ? (
-            <div className="profile-menu">
-              <div className="profile-avatar">
-                {user.avatarData ? (
-                  <img src={user.avatarData} alt={user.name} className="profile-avatar-img" />
-                ) : (
-                  getInitials(user.name)
-                )}
-              </div>
-              <span className="profile-name">{user.name}</span>
-              <button className="profile-logout-btn" onClick={() => { closeMenu(); onLogout(); }}>
-                Log out
-              </button>
-            </div>
-          ) : (
-            <button className="navbar-login-btn" onClick={() => { closeMenu(); onLoginClick(); }}>
-              Log in / Sign up
-            </button>
-          )}
         </div>
       </div>
     </header>

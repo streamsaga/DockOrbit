@@ -1,3 +1,4 @@
+import { useState } from "react";
 import TrustRing from "./TrustRing.jsx";
 import ScoreBreakdown from "./ScoreBreakdown.jsx";
 
@@ -15,6 +16,8 @@ export default function ChannelCard({
   onToggleBookmark,
   isBookmarked,
 }) {
+  const [showQuickStats, setShowQuickStats] = useState(false);
+
   return (
     <div className="channel-card">
       <div className="channel-card-header">
@@ -37,7 +40,7 @@ export default function ChannelCard({
             {formatCount(channel.subscribers)} subscribers
             {(channel.country || channel.language) && (
               <span className="channel-locale-badge">
-                {[channel.country, channel.language?.toUpperCase()].filter(Boolean).join(" · ")}
+                {(channel.country || channel.language?.toUpperCase())}
               </span>
             )}
           </p>
@@ -65,23 +68,32 @@ export default function ChannelCard({
         <span>
           <strong>{channel.uploadsLast30Days}</strong> uploads/30d
         </span>
-        <span>
-          <strong>{channel.videoCount}</strong> videos
-        </span>
       </div>
 
-      {channel.redFlags.length > 0 && (
-        <div className="red-flags">
-          {channel.redFlags.map((flag) => (
-            <div className="red-flag" key={flag}>
-              <span>⚠</span>
-              <span>{flag}</span>
+      <button
+        className={`quick-view-stats-btn ${showQuickStats ? "active" : ""}`}
+        onClick={() => setShowQuickStats(!showQuickStats)}
+      >
+        {showQuickStats ? "Hide View Stats" : "Quick View Stats"}
+      </button>
+
+      {showQuickStats && (
+        <div className="quick-stats-expanded">
+          {channel.redFlags && channel.redFlags.length > 0 && (
+            <div className="red-flags">
+              {channel.redFlags.map((flag) => (
+                <div className="red-flag" key={flag}>
+                  <span>⚠</span>
+                  <span>{flag}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+          <ScoreBreakdown breakdown={channel.scoreBreakdown} />
         </div>
       )}
 
-      <ScoreBreakdown breakdown={channel.scoreBreakdown} />
+      <hr className="card-divider" />
 
       <div className="card-actions">
         <label className={`compare-checkbox ${compareDisabled ? "disabled" : ""}`}>
@@ -91,7 +103,7 @@ export default function ChannelCard({
             disabled={compareDisabled}
             onChange={() => onToggleCompare(channel)}
           />
-          Compare
+          <span>Compare</span>
         </label>
         <a
           className="visit-btn"
@@ -102,7 +114,7 @@ export default function ChannelCard({
           target="_blank"
           rel="noopener noreferrer"
         >
-          Visit channel →
+          Visit channel &rarr;
         </a>
       </div>
     </div>

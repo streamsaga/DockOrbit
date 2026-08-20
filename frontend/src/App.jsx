@@ -6,8 +6,12 @@ import AboutPage from "./pages/AboutPage.jsx";
 import PrivacyPage from "./pages/PrivacyPage.jsx";
 import TermsPage from "./pages/TermsPage.jsx";
 import BackgroundDecor from "./components/BackgroundDecor.jsx";
+import BottomNav from "./components/BottomNav.jsx";
+import { useBookmarks } from "./hooks/useBookmarks.js";
 
 export default function App() {
+  const { bookmarks } = useBookmarks();
+
   return (
     <BrowserRouter>
       <BackgroundDecor />
@@ -19,6 +23,7 @@ export default function App() {
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
       </Routes>
+      <BottomNav savedCount={bookmarks.length} />
     </BrowserRouter>
   );
 }
