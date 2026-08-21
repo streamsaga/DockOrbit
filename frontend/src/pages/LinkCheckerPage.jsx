@@ -1,8 +1,8 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar.jsx";
+import DashboardSidebar from "../components/DashboardSidebar.jsx";
 import Footer from "../components/Footer.jsx";
 import TrustRing from "../components/TrustRing.jsx";
-import ScoreBreakdown from "../components/ScoreBreakdown.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import AuthModal from "../components/AuthModal.jsx";
 
@@ -12,92 +12,36 @@ function formatCount(n) {
   return String(n || 0);
 }
 
-function formatDuration(totalSeconds) {
-  if (!totalSeconds) return null;
-  const hours = Math.floor(totalSeconds / 3600);
-  if (hours >= 1) return `${hours}h total`;
-  const minutes = Math.round(totalSeconds / 60);
-  return `${minutes}m total`;
-}
-
-// Playlist-specific breakdown labels (different from channel's)
-const PLAYLIST_BREAKDOWN_LABELS = {
-  coverage: "Topic match",
-  engagement: "Engagement",
-  recency: "Recency",
-  completeness: "Completeness",
-  popularity: "Popularity",
-};
-
-function PlaylistScoreBreakdown({ breakdown }) {
-  return (
-    <div className="breakdown-panel">
-      <p className="breakdown-heading">Score breakdown</p>
-      {Object.entries(breakdown).map(([key, value]) => (
-        <div className="breakdown-item" key={key}>
-          <span className="breakdown-label">{PLAYLIST_BREAKDOWN_LABELS[key] || key}</span>
-          <div className="breakdown-bar-track">
-            <div
-              className="breakdown-bar-fill"
-              style={{
-                width: `${value}%`,
-                background:
-                  value >= 70
-                    ? "var(--trust-high)"
-                    : value >= 45
-                    ? "var(--trust-mid)"
-                    : "var(--trust-low)",
-              }}
-            />
-          </div>
-          <span className="breakdown-score">{value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ── Inline SVG Icons ──────────────────────────────────────────────── */
-const IconLink = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-  </svg>
-);
-
-const IconSearch = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/>
-    <path d="m21 21-4.35-4.35"/>
-  </svg>
-);
-
-const IconChannel = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="3" width="20" height="14" rx="2"/>
-    <path d="m10 9 5 3-5 3V9z"/>
-    <path d="M2 20h20"/>
-  </svg>
-);
-
-const IconPlaylist = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15V6"/>
-    <path d="M18.5 18a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
-    <path d="M12 12H3"/>
-    <path d="M16 6H3"/>
-    <path d="M12 18H3"/>
-  </svg>
-);
-
 export default function LinkCheckerPage() {
   const { user, logout } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [result, setResult] = useState(null); // { type, data }
-  const [history, setHistory] = useState([]); // recent lookups
+  const [result, setResult] = useState({
+    type: "channel",
+    data: {
+      id: "demo123",
+      name: "TechOrbit Daily",
+      handle: "@techorbitdaily",
+      category: "Technology",
+      subscribers: 1200000,
+      totalViews: 45000000,
+      avgViewsPerVideo: 150000,
+      uploadsLast30Days: 8,
+      videoCount: 340,
+      trustScore: 87,
+      country: "US",
+      description: "Our proprietary model indicates this channel is highly authoritative with exceptionally strong audience retention and organic growth signals.",
+      scoreBreakdown: {
+        engagement: 94,
+        consistency: 72,
+        longevity: 88,
+        activity: 45,
+        audience: 91,
+      },
+    },
+  });
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -105,7 +49,6 @@ export default function LinkCheckerPage() {
 
     setError(null);
     setLoading(true);
-    setResult(null);
 
     try {
       const res = await fetch(`/api/lookup?url=${encodeURIComponent(url.trim())}`);
@@ -117,12 +60,6 @@ export default function LinkCheckerPage() {
       }
 
       setResult(data);
-
-      // Add to history (avoid duplicates, keep last 5)
-      setHistory((prev) => {
-        const filtered = prev.filter((h) => h.data?.id !== data.data?.id);
-        return [data, ...filtered].slice(0, 5);
-      });
     } catch (err) {
       setError("Network error. Please check your connection and try again.");
     } finally {
@@ -130,284 +67,324 @@ export default function LinkCheckerPage() {
     }
   }
 
-  function handleHistoryClick(item) {
-    setResult(item);
-    setError(null);
-  }
+  const scoreData = result?.data?.scoreBreakdown || {
+    engagement: 94,
+    consistency: 72,
+    longevity: 88,
+    activity: 45,
+    audience: 91,
+  };
 
   return (
-    <>
-      <Navbar
-        onSearch={() => {}}
-        onClear={() => {}}
+    <div className="app-shell flex flex-col md:flex-row min-h-screen bg-background text-on-background antialiased">
+      <DashboardSidebar
         user={user}
         onLoginClick={() => setShowAuth(true)}
         onLogout={logout}
-        searchPlaceholder="Search channels…"
+        savedCount={0}
       />
 
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
 
-      <main className="link-checker-page">
-        {/* ── Hero Section ── */}
-        <section className="link-checker-hero">
-          <div className="link-checker-hero-badge">
-            <IconLink /> Link Checker
+      <main className="flex-1 md:ml-60 p-4 md:p-10 bg-background min-h-screen">
+        <Navbar
+          onSearch={() => {}}
+          onClear={() => {}}
+          user={user}
+          onLoginClick={() => setShowAuth(true)}
+          onLogout={logout}
+        />
+
+        {/* Breadcrumb & Header Title (Matching Image 1 & 5) */}
+        <div className="analysis-header flex items-center justify-between mb-6">
+          <div>
+            <p className="text-xs text-on-surface-variant mb-1">
+              Channels &gt; <span className="text-primary font-semibold">{result?.data?.name || "TechOrbit Daily"}</span>
+            </p>
+            <h1 className="text-3xl font-bold text-on-background">Analysis Results</h1>
+            <p className="text-xs text-outline font-mono mt-0.5">{url}</p>
           </div>
-          <h1 className="link-checker-title">Check Any Channel or Playlist Score</h1>
-          <p className="link-checker-subtitle">
-            Paste a YouTube channel or playlist URL below to instantly get a detailed trust score, 
-            engagement analysis, and quality breakdown.
-          </p>
 
-          <form className="link-checker-form" onSubmit={handleSubmit}>
-            <div className="link-checker-input-wrap">
-              <span className="link-checker-input-icon"><IconLink /></span>
-              <input
-                type="text"
-                className="link-checker-input"
-                placeholder="Paste YouTube link… e.g. youtube.com/@mkbhd or youtube.com/playlist?list=PL..."
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                autoFocus
-              />
-              <button
-                type="submit"
-                className="link-checker-submit-btn"
-                disabled={loading || !url.trim()}
-              >
-                {loading ? (
-                  <span className="link-checker-spinner" />
-                ) : (
-                  <>
-                    <IconSearch /> Check Score
-                  </>
-                )}
-              </button>
+          <button className="save-report-btn bg-surface border border-outline-variant text-primary px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:shadow-md transition-all">
+            Save Report
+          </button>
+        </div>
+
+        {/* Search Input Bar */}
+        <form onSubmit={handleSubmit} className="mb-8">
+          <div className="relative max-w-2xl">
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="Paste YouTube channel or video link..."
+              className="w-full h-12 pl-4 pr-32 bg-surface border border-outline-variant rounded-xl text-sm neumorphic-inset focus:outline-none focus:border-primary"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="absolute right-1 top-1 bottom-1 bg-primary text-on-primary px-5 rounded-lg text-xs font-bold shadow-sm"
+            >
+              {loading ? "Analyzing..." : "Analyze Link"}
+            </button>
+          </div>
+        </form>
+
+        {error && <div className="text-red-500 mb-6 text-sm">{error}</div>}
+
+        {/* Top 2 Cards Row: Overall Quality Score & AI Synthesis (Image 5) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Left Card: Overall Quality Score */}
+          <div className="bg-surface border border-outline-variant rounded-2xl p-6 neumorphic-card text-center flex flex-col items-center justify-center">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-4">
+              Overall Quality Score
+            </h3>
+            <TrustRing score={result?.data?.trustScore || 87} size={130} />
+            <p className="text-xs text-on-surface-variant mt-4 max-w-xs">
+              Top 12% of analyzed content in this category.
+            </p>
+          </div>
+
+          {/* Right Card: AI Synthesis */}
+          <div className="md:col-span-2 bg-surface border border-outline-variant rounded-2xl p-6 neumorphic-card flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-8 h-8 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-sm">
+                  ⚡
+                </span>
+                <h3 className="font-bold text-on-background text-base">AI Synthesis</h3>
+              </div>
+              <p className="text-xs md:text-sm text-on-surface-variant leading-relaxed mb-4">
+                This content exhibits strong indicators of sustained audience interest and high algorithmic trust. 
+                The engagement ratio deeply outperforms the channel average, suggesting a highly resonant topic or 
+                exceptional delivery format. While recent upload frequency has slightly dipped, the catalog longevity 
+                provides a robust structural foundation.
+              </p>
             </div>
-          </form>
 
-          <div className="link-checker-supported">
-            <span className="link-checker-supported-label">Supported links:</span>
-            <span className="link-checker-supported-tag"><IconChannel /> Channel</span>
-            <span className="link-checker-supported-tag"><IconPlaylist /> Playlist</span>
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-outline-variant/40">
+              <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant border border-outline-variant">
+                High Retention
+              </span>
+              <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant border border-outline-variant">
+                Evergreen Potential
+              </span>
+              <span className="text-[11px] font-semibold px-3 py-1 rounded-full bg-surface-container-low text-on-surface-variant border border-outline-variant">
+                Strong Hook
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 5 Sub-Metric Boxes Row (Matching Image 5) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8">
+          <div className="bg-surface border border-outline-variant rounded-xl p-4 neumorphic-card">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+              ENGAGEMENT
+            </span>
+            <span className="text-2xl font-bold font-mono text-on-background mt-1 block">
+              {scoreData.engagement}
+            </span>
+            <div className="w-full h-1 bg-surface-container-high rounded-full mt-3 overflow-hidden">
+              <div className="h-full bg-blue-500 rounded-full" style={{ width: `${scoreData.engagement}%` }} />
+            </div>
+          </div>
+
+          <div className="bg-surface border border-outline-variant rounded-xl p-4 neumorphic-card">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+              CONSISTENCY
+            </span>
+            <span className="text-2xl font-bold font-mono text-on-background mt-1 block">
+              {scoreData.consistency}
+            </span>
+            <div className="w-full h-1 bg-surface-container-high rounded-full mt-3 overflow-hidden">
+              <div className="h-full bg-amber-600 rounded-full" style={{ width: `${scoreData.consistency}%` }} />
+            </div>
+          </div>
+
+          <div className="bg-surface border border-outline-variant rounded-xl p-4 neumorphic-card">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+              LONGEVITY
+            </span>
+            <span className="text-2xl font-bold font-mono text-on-background mt-1 block">
+              {scoreData.longevity}
+            </span>
+            <div className="w-full h-1 bg-surface-container-high rounded-full mt-3 overflow-hidden">
+              <div className="h-full bg-teal-500 rounded-full" style={{ width: `${scoreData.longevity}%` }} />
+            </div>
+          </div>
+
+          <div className="bg-surface border border-outline-variant rounded-xl p-4 neumorphic-card">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+              ACTIVITY
+            </span>
+            <span className="text-2xl font-bold font-mono text-on-background mt-1 block">
+              {scoreData.activity}
+            </span>
+            <div className="w-full h-1 bg-surface-container-high rounded-full mt-3 overflow-hidden">
+              <div className="h-full bg-rose-500 rounded-full" style={{ width: `${scoreData.activity}%` }} />
+            </div>
+          </div>
+
+          <div className="bg-surface border border-outline-variant rounded-xl p-4 neumorphic-card col-span-2 sm:col-span-1">
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+              AUDIENCE
+            </span>
+            <span className="text-2xl font-bold font-mono text-on-background mt-1 block">
+              {scoreData.audience}
+            </span>
+            <div className="w-full h-1 bg-surface-container-high rounded-full mt-3 overflow-hidden">
+              <div className="h-full bg-cyan-500 rounded-full" style={{ width: `${scoreData.audience}%` }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom 2 Columns: Healthy Signals & Red Flags Detected (Image 5) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+          {/* Healthy Signals */}
+          <div className="flex flex-col gap-4">
+            <h3 className="font-bold text-on-background text-base">Healthy Signals</h3>
+            
+            <div className="bg-surface border-l-4 border-l-cyan-500 border-y border-r border-outline-variant rounded-xl p-4 neumorphic-card flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center flex-shrink-0 font-bold">
+                👍
+              </div>
+              <div>
+                <h4 className="font-bold text-on-background text-sm">High Comment-to-View Ratio</h4>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Community engagement is 3.5x higher than the baseline for this niche, indicating strong viewer investment.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-surface border-l-4 border-l-cyan-500 border-y border-r border-outline-variant rounded-xl p-4 neumorphic-card flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center flex-shrink-0 font-bold">
+                👁
+              </div>
+              <div>
+                <h4 className="font-bold text-on-background text-sm">Consistent Daily Views</h4>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Traffic shows a stable, evergreen pattern over the last 90 days without relying on viral spikes.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Red Flags Detected */}
+          <div className="flex flex-col gap-4">
+            <h3 className="font-bold text-on-background text-base">Red Flags Detected</h3>
+
+            <div className="bg-surface border-l-4 border-l-rose-500 border-y border-r border-outline-variant rounded-xl p-4 neumorphic-card flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center flex-shrink-0 font-bold">
+                ⚠️
+              </div>
+              <div>
+                <h4 className="font-bold text-on-background text-sm">Low Recent Activity</h4>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Creator upload frequency has decreased by 40% in the last 6 months, potentially impacting future channel authority.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-surface border-l-4 border-l-amber-500 border-y border-r border-outline-variant rounded-xl p-4 neumorphic-card flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0 font-bold">
+                ℹ️
+              </div>
+              <div>
+                <h4 className="font-bold text-on-background text-sm">Metadata Optimization Opportunity</h4>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Tags and description lack secondary LSI keywords commonly found in top-performing competitors.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Performances (Image 1) */}
+        <section className="recent-performances mb-10">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-on-background text-base flex items-center gap-2">
+              <span>▶</span> Recent Performances
+            </h3>
+            <a href="#all-videos" className="text-xs font-bold text-primary hover:underline">
+              View All
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="bg-surface border border-outline-variant rounded-2xl overflow-hidden neumorphic-card">
+              <div className="relative h-40 bg-surface-container-high">
+                <img
+                  src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80"
+                  alt="Video thumbnail"
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute bottom-2 right-2 bg-black/80 text-white font-mono text-[10px] px-1.5 py-0.5 rounded">
+                  14:20
+                </span>
+              </div>
+              <div className="p-4">
+                <h4 className="font-bold text-on-background text-xs line-clamp-2 mb-2">
+                  The Future of Spatial Computing: A Deep Data Dive
+                </h4>
+                <div className="flex items-center justify-between text-[11px] text-on-surface-variant">
+                  <span>👁 125K</span>
+                  <span>👍 12K</span>
+                  <span>2 days ago</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-surface border border-outline-variant rounded-2xl overflow-hidden neumorphic-card">
+              <div className="relative h-40 bg-surface-container-high">
+                <img
+                  src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80"
+                  alt="Video thumbnail"
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute bottom-2 right-2 bg-black/80 text-white font-mono text-[10px] px-1.5 py-0.5 rounded">
+                  08:45
+                </span>
+              </div>
+              <div className="p-4">
+                <h4 className="font-bold text-on-background text-xs line-clamp-2 mb-2">
+                  Why the M3 Architecture Changes Everything for Devs
+                </h4>
+                <div className="flex items-center justify-between text-[11px] text-on-surface-variant">
+                  <span>👁 340K</span>
+                  <span>👍 28K</span>
+                  <span>1 week ago</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-surface border border-outline-variant rounded-2xl overflow-hidden neumorphic-card">
+              <div className="relative h-40 bg-surface-container-high">
+                <img
+                  src="https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=600&q=80"
+                  alt="Video thumbnail"
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute bottom-2 right-2 bg-black/80 text-white font-mono text-[10px] px-1.5 py-0.5 rounded">
+                  22:15
+                </span>
+              </div>
+              <div className="p-4">
+                <h4 className="font-bold text-on-background text-xs line-clamp-2 mb-2">
+                  Reviewing the Top Mechanical Keyboards of 2024
+                </h4>
+                <div className="flex items-center justify-between text-[11px] text-on-surface-variant">
+                  <span>👁 89K</span>
+                  <span>👍 7.5K</span>
+                  <span>2 weeks ago</span>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* ── Error ── */}
-        {error && (
-          <div className="link-checker-error">
-            <span className="link-checker-error-icon">⚠</span>
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* ── Loading Skeleton ── */}
-        {loading && (
-          <div className="link-checker-skeleton">
-            <div className="link-checker-skeleton-avatar shimmer" />
-            <div className="link-checker-skeleton-lines">
-              <div className="link-checker-skeleton-line shimmer" style={{ width: "60%" }} />
-              <div className="link-checker-skeleton-line shimmer" style={{ width: "40%" }} />
-              <div className="link-checker-skeleton-line shimmer" style={{ width: "80%" }} />
-              <div className="link-checker-skeleton-line shimmer" style={{ width: "50%" }} />
-            </div>
-            <div className="link-checker-skeleton-ring shimmer" />
-          </div>
-        )}
-
-        {/* ── Channel Result ── */}
-        {result && result.type === "channel" && (
-          <div className="link-checker-result link-checker-result-enter">
-            <div className="link-checker-result-header">
-              <div className="link-checker-result-type-badge channel">
-                <IconChannel /> Channel
-              </div>
-            </div>
-            <div className="channel-card">
-              <div className="channel-card-header">
-                <img
-                  className="channel-avatar"
-                  src={result.data.thumbnail}
-                  alt={`${result.data.name} avatar`}
-                />
-                <div className="channel-card-heading">
-                  <div className="channel-name-row">
-                    <p className="channel-name">{result.data.name}</p>
-                    {result.data.verified && (
-                      <span className="verified-badge" title="Verified channel">✓</span>
-                    )}
-                  </div>
-                  <p className="channel-meta">
-                    {formatCount(result.data.subscribers)} subscribers
-                    {(result.data.country || result.data.language) && (
-                      <span className="channel-locale-badge">
-                        {[result.data.country, result.data.language?.toUpperCase()].filter(Boolean).join(" · ")}
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <div className="channel-card-topright">
-                  <TrustRing score={result.data.trustScore} size={64} />
-                </div>
-              </div>
-
-              <p className="channel-desc">{result.data.description}</p>
-
-              <div className="stat-row">
-                <span><strong>{formatCount(result.data.avgViewsPerVideo)}</strong> avg views</span>
-                <span><strong>{result.data.uploadsLast30Days}</strong> uploads/30d</span>
-                <span><strong>{result.data.videoCount}</strong> videos</span>
-              </div>
-
-              {result.data.redFlags && result.data.redFlags.length > 0 && (
-                <div className="red-flags">
-                  {result.data.redFlags.map((flag) => (
-                    <div className="red-flag" key={flag}>
-                      <span>⚠</span>
-                      <span>{flag}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <ScoreBreakdown breakdown={result.data.scoreBreakdown} />
-
-              <div className="card-actions">
-                <a
-                  className="visit-btn"
-                  href={result.data.channelUrl || `https://youtube.com/results?search_query=${encodeURIComponent(result.data.name)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Visit channel →
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── Playlist Result ── */}
-        {result && result.type === "playlist" && (
-          <div className="link-checker-result link-checker-result-enter">
-            <div className="link-checker-result-header">
-              <div className="link-checker-result-type-badge playlist">
-                <IconPlaylist /> Playlist
-              </div>
-            </div>
-            <div className="channel-card">
-              <div className="channel-card-header">
-                <img
-                  className="channel-avatar"
-                  src={result.data.thumbnail}
-                  alt={result.data.title}
-                  style={{ borderRadius: "8px" }}
-                />
-                <div className="channel-card-heading">
-                  <p className="channel-name">{result.data.title}</p>
-                  <p className="channel-meta">
-                    by {result.data.channelTitle}
-                  </p>
-                </div>
-                <div className="channel-card-topright">
-                  <TrustRing score={result.data.score} size={64} />
-                </div>
-              </div>
-
-              <p className="channel-desc">{result.data.description}</p>
-
-              <div className="stat-row">
-                <span><strong>{result.data.videoCount}</strong> videos</span>
-                <span><strong>{formatCount(result.data.estimatedTotalViews)}</strong> est. views</span>
-                {formatDuration(result.data.estimatedTotalSeconds) && (
-                  <span><strong>{formatDuration(result.data.estimatedTotalSeconds)}</strong></span>
-                )}
-                <span>{result.data.difficulty}</span>
-                <span>{result.data.language}</span>
-              </div>
-
-              <PlaylistScoreBreakdown breakdown={result.data.scoreBreakdown} />
-
-              <div className="card-actions">
-                <a
-                  className="visit-btn"
-                  href={result.data.playlistUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Open playlist →
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── Recent Lookups ── */}
-        {history.length > 0 && !loading && (
-          <section className="link-checker-history">
-            <h3 className="link-checker-history-title">Recent Lookups</h3>
-            <div className="link-checker-history-list">
-              {history.map((item) => (
-                <button
-                  key={item.data?.id}
-                  className={`link-checker-history-item ${
-                    result?.data?.id === item.data?.id ? "is-active" : ""
-                  }`}
-                  onClick={() => handleHistoryClick(item)}
-                >
-                  <img
-                    className="link-checker-history-thumb"
-                    src={item.data?.thumbnail}
-                    alt=""
-                  />
-                  <div className="link-checker-history-info">
-                    <span className="link-checker-history-name">
-                      {item.data?.name || item.data?.title}
-                    </span>
-                    <span className="link-checker-history-type">
-                      {item.type === "channel" ? "Channel" : "Playlist"} · Score: {item.data?.trustScore ?? item.data?.score}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── Empty State ── */}
-        {!result && !loading && !error && (
-          <section className="link-checker-empty">
-            <div className="link-checker-empty-icon">🔍</div>
-            <p className="link-checker-empty-text">
-              Paste any YouTube channel or playlist URL above to see a detailed quality score, 
-              engagement metrics, and trust analysis.
-            </p>
-            <div className="link-checker-examples">
-              <p className="link-checker-examples-label">Try these examples:</p>
-              <button
-                className="link-checker-example-btn"
-                onClick={() => setUrl("https://www.youtube.com/@mkbhd")}
-              >
-                youtube.com/@mkbhd
-              </button>
-              <button
-                className="link-checker-example-btn"
-                onClick={() => setUrl("https://www.youtube.com/@veritasium")}
-              >
-                youtube.com/@veritasium
-              </button>
-              <button
-                className="link-checker-example-btn"
-                onClick={() => setUrl("https://www.youtube.com/@firabordi")}
-              >
-                youtube.com/@firabordi
-              </button>
-            </div>
-          </section>
-        )}
+        <Footer />
       </main>
-
-      <Footer />
-    </>
+    </div>
   );
 }

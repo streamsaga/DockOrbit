@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import CategoryPicker from "../components/CategoryPicker.jsx";
 import Dropdown from "../components/Dropdown.jsx";
 import ChannelCard from "../components/ChannelCard.jsx";
 import CompareModal from "../components/CompareModal.jsx";
@@ -7,7 +6,7 @@ import SkeletonCard from "../components/SkeletonCard.jsx";
 import AuthModal from "../components/AuthModal.jsx";
 import Navbar from "../components/Navbar.jsx";
 import DashboardSidebar from "../components/DashboardSidebar.jsx";
-import HeroSearchSection from "../components/HeroSearchSection.jsx";
+import TopLeaderboardWidget from "../components/TopLeaderboardWidget.jsx";
 import Mascot from "../components/illustrations/Mascot.jsx";
 import Footer from "../components/Footer.jsx";
 import { useBookmarks } from "../hooks/useBookmarks.js";
@@ -173,143 +172,156 @@ export default function ChannelDiscoveryPage() {
         savedCount={bookmarks.length}
       />
 
-      <main className="flex-1 md:ml-60 p-4 md:p-12 bg-background min-h-screen">
+      <main className="flex-1 md:ml-60 p-4 md:p-10 bg-background min-h-screen">
         <Navbar
+          onSearch={handleSearch}
+          onClear={handleClearSearch}
           user={user}
           onLoginClick={() => setShowAuthModal(true)}
           onLogout={logout}
         />
 
-        <HeroSearchSection
-          onSearch={handleSearch}
-          onClear={handleClearSearch}
-          initialQuery={searchQuery || ""}
-        />
+        {/* Explore Channels Header Section (Matching Image 2 Reference) */}
+        <section className="explore-header mb-8">
+          <h1 className="font-display-lg text-display-lg font-bold text-on-background mb-2">
+            Explore Channels
+          </h1>
+          <p className="text-body-md text-on-surface-variant text-base md:text-lg">
+            Discover high-quality video content creators based on intelligent metrics.
+          </p>
+        </section>
 
-        <div className="subnav mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          {categories.length > 0 && !searchQuery && !showSaved && (
-            <CategoryPicker
-              categories={categories}
-              activeCategory={activeCategory}
-              onSelect={handleCategorySelect}
+        {/* Filter Bar (Matching Image 2 Reference) */}
+        <div className="filter-bar bg-surface neumorphic-card rounded-2xl p-3 mb-8 flex flex-wrap items-center justify-between gap-3 border border-surface-variant">
+          <div className="flex flex-wrap items-center gap-2">
+            {categories.length > 0 && (
+              <select
+                value={activeCategory || ""}
+                onChange={(e) => handleCategorySelect(e.target.value)}
+                className="bg-surface-container-low border border-outline-variant text-xs font-semibold px-3 py-2 rounded-xl text-on-background outline-none"
+              >
+                <option value="">All Categories</option>
+                {categories.map((cat) => (
+                  <option key={cat.slug} value={cat.slug}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <Dropdown
+              ariaLabel="Filter by country"
+              value={country}
+              onChange={setCountry}
+              options={COUNTRIES.map((c) => ({ value: c.code, label: c.label }))}
             />
-          )}
-          <button
-            className={`saved-nav-btn ${showSaved ? "active" : ""}`}
-            onClick={handleSavedNavClick}
-          >
-            ★ Saved ({bookmarks.length})
-          </button>
+
+            <Dropdown
+              ariaLabel="Filter by language"
+              value={language}
+              onChange={setLanguage}
+              options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
+            />
+
+            <button className="category-chip active text-xs">
+              Any Q-Score
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-on-surface-variant font-medium">Sort by:</span>
+            <Dropdown
+              ariaLabel="Sort channels"
+              value={sort}
+              onChange={setSort}
+              options={[
+                { value: "trustScore", label: "Quality Score" },
+                { value: "subscribers", label: "Subscribers" },
+                { value: "recent", label: "Recent Activity" },
+              ]}
+            />
+          </div>
         </div>
 
-        <div className="page-content">
-          {(categories.length > 0 || searchQuery) && !showSaved && (
-            <div className="toolbar mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
-              <span className="toolbar-label text-sm text-on-surface-variant font-medium">
-                {searchQuery
-                  ? `${channels.length} result${channels.length !== 1 ? "s" : ""} for "${searchQuery}"`
-                  : `${channels.length} channel${channels.length !== 1 ? "s" : ""} found`}
-              </span>
-
-              <div className="toolbar-filters flex flex-wrap items-center gap-3">
-                <Dropdown
-                  ariaLabel="Sort channels"
-                  value={sort}
-                  onChange={setSort}
-                  options={[
-                    { value: "trustScore", label: "Sort by Trust Score" },
-                    { value: "subscribers", label: "Sort by Subscribers" },
-                    { value: "recent", label: "Sort by Recent Activity" },
-                  ]}
-                />
-
-                <Dropdown
-                  ariaLabel="Filter by country"
-                  value={country}
-                  onChange={setCountry}
-                  options={COUNTRIES.map((c) => ({ value: c.code, label: c.label }))}
-                />
-
-                <Dropdown
-                  ariaLabel="Filter by language"
-                  value={language}
-                  onChange={setLanguage}
-                  options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
-                />
+        {/* Main Content Layout: 2-Columns (Grid + Top 10 Leaderboard) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            {showSaved && (
+              <div className="toolbar mb-4">
+                <span className="toolbar-label text-sm text-on-surface-variant font-medium">
+                  {bookmarks.length} saved channel{bookmarks.length !== 1 ? "s" : ""}
+                </span>
               </div>
-            </div>
-          )}
+            )}
 
-          {showSaved && (
-            <div className="toolbar mb-6">
-              <span className="toolbar-label text-sm text-on-surface-variant font-medium">
-                {bookmarks.length} saved channel{bookmarks.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-          )}
+            {error && !showSaved && <div className="error-state text-red-500 p-4 mb-4">{error}</div>}
 
-          {error && !showSaved && <div className="error-state text-red-500 p-4 mb-4">{error}</div>}
-
-          {loading && !error && !showSaved && (
-            <div className="channel-grid">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <SkeletonCard key={i} />
-              ))}
-            </div>
-          )}
-
-          {!loading && !error && displayedChannels.length === 0 && (
-            <div className="empty-state text-center py-12">
-              <Mascot variant="empty" width={220} />
-              <p className="empty-state-text mt-4 text-on-surface-variant">
-                {showSaved
-                  ? "No saved channels yet — click the star on any channel card to save it here."
-                  : searchQuery
-                  ? `No channels found for "${searchQuery}". Try a broader keyword.`
-                  : "No channels found in this category yet."}
-              </p>
-            </div>
-          )}
-
-          {!loading && displayedChannels.length > 0 && (
-            <>
-              <div className="channel-grid">
-                {displayedChannels.map((channel) => (
-                  <ChannelCard
-                    key={channel.id}
-                    channel={channel}
-                    onToggleCompare={handleToggleCompare}
-                    isComparing={compareList.some((c) => c.id === channel.id)}
-                    compareDisabled={
-                      compareList.length >= MAX_COMPARE &&
-                      !compareList.some((c) => c.id === channel.id)
-                    }
-                    onToggleBookmark={handleToggleBookmark}
-                    isBookmarked={isBookmarked(channel.id)}
-                  />
+            {loading && !error && !showSaved && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <SkeletonCard key={i} />
                 ))}
               </div>
+            )}
 
-              {!showSaved && nextPageToken && (
-                <div className="load-more-row text-center mt-8">
-                  <button
-                    className="load-more-btn bg-primary text-on-primary px-8 py-3 rounded-full font-medium"
-                    onClick={handleLoadMore}
-                    disabled={loadingMore}
-                  >
-                    {loadingMore ? "Loading…" : "Load more channels"}
-                  </button>
+            {!loading && !error && displayedChannels.length === 0 && (
+              <div className="empty-state text-center py-12">
+                <Mascot variant="empty" width={220} />
+                <p className="empty-state-text mt-4 text-on-surface-variant">
+                  {showSaved
+                    ? "No saved channels yet — click the star on any channel card to save it here."
+                    : searchQuery
+                    ? `No channels found for "${searchQuery}". Try a broader keyword.`
+                    : "No channels found in this category yet."}
+                </p>
+              </div>
+            )}
+
+            {!loading && displayedChannels.length > 0 && (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {displayedChannels.map((channel) => (
+                    <ChannelCard
+                      key={channel.id}
+                      channel={channel}
+                      onToggleCompare={handleToggleCompare}
+                      isComparing={compareList.some((c) => c.id === channel.id)}
+                      compareDisabled={
+                        compareList.length >= MAX_COMPARE &&
+                        !compareList.some((c) => c.id === channel.id)
+                      }
+                      onToggleBookmark={handleToggleBookmark}
+                      isBookmarked={isBookmarked(channel.id)}
+                    />
+                  ))}
                 </div>
-              )}
-            </>
-          )}
+
+                {!showSaved && nextPageToken && (
+                  <div className="load-more-row text-center mt-8">
+                    <button
+                      className="load-more-btn bg-primary text-on-primary px-8 py-3 rounded-full font-bold shadow-md hover:bg-primary-container transition-all text-xs"
+                      onClick={handleLoadMore}
+                      disabled={loadingMore}
+                    >
+                      {loadingMore ? "Loading…" : "Load more channels"}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Right Column: Top 10 Leaderboard Widget */}
+          <div className="lg:col-span-1">
+            <TopLeaderboardWidget />
+          </div>
         </div>
 
         <Footer />
       </main>
 
       {compareList.length > 0 && (
-        <div className="compare-bar fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-surface shadow-lg rounded-full px-6 py-3 border border-outline-variant flex items-center gap-4">
+        <div className="compare-bar fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-surface shadow-xl rounded-full px-6 py-3 border border-outline-variant flex items-center gap-4">
           <span className="compare-bar-text text-sm font-medium text-on-background">
             {compareList.length} of {MAX_COMPARE} selected for comparison
           </span>
