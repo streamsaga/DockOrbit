@@ -6,6 +6,8 @@ import CompareModal from "../components/CompareModal.jsx";
 import SkeletonCard from "../components/SkeletonCard.jsx";
 import AuthModal from "../components/AuthModal.jsx";
 import Navbar from "../components/Navbar.jsx";
+import DashboardSidebar from "../components/DashboardSidebar.jsx";
+import DashboardWidgets from "../components/DashboardWidgets.jsx";
 import Mascot from "../components/illustrations/Mascot.jsx";
 import Footer from "../components/Footer.jsx";
 import { useBookmarks } from "../hooks/useBookmarks.js";
@@ -42,7 +44,7 @@ export default function ChannelDiscoveryPage() {
         setCategories(data);
         if (data.length > 0) setActiveCategory(data[0].slug);
       })
-      .catch(() => setError("Could not reach the backend. Is it running on port 5000?"));
+      .catch(() => setError("Could not reach backend. Is it running on port 5000?"));
   }, []);
 
   useEffect(() => {
@@ -162,132 +164,148 @@ export default function ChannelDiscoveryPage() {
   const displayedChannels = showSaved ? bookmarks : channels;
 
   return (
-    <div className="app-shell">
-      <Navbar
-        onSearch={handleSearch}
-        onClear={handleClearSearch}
+    <div className="dashboard-container">
+      <DashboardSidebar
         user={user}
         onLoginClick={() => setShowAuthModal(true)}
         onLogout={logout}
+        onSavedClick={handleSavedNavClick}
+        savedCount={bookmarks.length}
       />
 
-      <div className="subnav">
-        {categories.length > 0 && !searchQuery && !showSaved && (
-          <CategoryPicker
-            categories={categories}
-            activeCategory={activeCategory}
-            onSelect={handleCategorySelect}
-          />
-        )}
-        <button
-          className={`saved-nav-btn ${showSaved ? "active" : ""}`}
-          onClick={handleSavedNavClick}
-        >
-          ★ Saved ({bookmarks.length})
-        </button>
-      </div>
+      <div className="dashboard-main-area">
+        <Navbar
+          onSearch={handleSearch}
+          onClear={handleClearSearch}
+          user={user}
+          onLoginClick={() => setShowAuthModal(true)}
+          onLogout={logout}
+        />
 
-      <div className="page-content">
-        {(categories.length > 0 || searchQuery) && !showSaved && (
-          <div className="toolbar">
-            <span className="toolbar-label">
-              {searchQuery
-                ? `${channels.length} result${channels.length !== 1 ? "s" : ""} for "${searchQuery}"`
-                : `${channels.length} channel${channels.length !== 1 ? "s" : ""} found`}
-            </span>
+        <div className="dashboard-body">
+          <DashboardWidgets onCategorySelect={handleCategorySelect} />
 
-            <div className="toolbar-filters">
-              <Dropdown
-                ariaLabel="Sort channels"
-                value={sort}
-                onChange={setSort}
-                options={[
-                  { value: "trustScore", label: "Sort by Trust Score" },
-                  { value: "subscribers", label: "Sort by Subscribers" },
-                  { value: "recent", label: "Sort by Recent Activity" },
-                ]}
+          <div className="subnav">
+            {categories.length > 0 && !searchQuery && !showSaved && (
+              <CategoryPicker
+                categories={categories}
+                activeCategory={activeCategory}
+                onSelect={handleCategorySelect}
               />
-
-              <Dropdown
-                ariaLabel="Filter by country"
-                value={country}
-                onChange={setCountry}
-                options={COUNTRIES.map((c) => ({ value: c.code, label: c.label }))}
-              />
-
-              <Dropdown
-                ariaLabel="Filter by language"
-                value={language}
-                onChange={setLanguage}
-                options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
-              />
-            </div>
+            )}
+            <button
+              className={`saved-nav-btn ${showSaved ? "active" : ""}`}
+              onClick={handleSavedNavClick}
+            >
+              ★ Saved ({bookmarks.length})
+            </button>
           </div>
-        )}
 
-        {showSaved && (
-          <div className="toolbar">
-            <span className="toolbar-label">
-              {bookmarks.length} saved channel{bookmarks.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-        )}
+          <div className="page-content">
+            {(categories.length > 0 || searchQuery) && !showSaved && (
+              <div className="toolbar">
+                <span className="toolbar-label">
+                  {searchQuery
+                    ? `${channels.length} result${channels.length !== 1 ? "s" : ""} for "${searchQuery}"`
+                    : `${channels.length} channel${channels.length !== 1 ? "s" : ""} found`}
+                </span>
 
-        {error && !showSaved && <div className="error-state">{error}</div>}
+                <div className="toolbar-filters">
+                  <Dropdown
+                    ariaLabel="Sort channels"
+                    value={sort}
+                    onChange={setSort}
+                    options={[
+                      { value: "trustScore", label: "Sort by Trust Score" },
+                      { value: "subscribers", label: "Sort by Subscribers" },
+                      { value: "recent", label: "Sort by Recent Activity" },
+                    ]}
+                  />
 
-        {loading && !error && !showSaved && (
-          <div className="channel-grid">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </div>
-        )}
+                  <Dropdown
+                    ariaLabel="Filter by country"
+                    value={country}
+                    onChange={setCountry}
+                    options={COUNTRIES.map((c) => ({ value: c.code, label: c.label }))}
+                  />
 
-        {!loading && !error && displayedChannels.length === 0 && (
-          <div className="empty-state">
-            <Mascot variant="empty" width={220} />
-            <p className="empty-state-text">
-              {showSaved
-                ? "No saved channels yet — click the star on any channel card to save it here."
-                : searchQuery
-                ? `No channels found for "${searchQuery}". Try a broader keyword.`
-                : "No channels found in this category yet."}
-            </p>
-          </div>
-        )}
-
-        {!loading && displayedChannels.length > 0 && (
-          <>
-            <div className="channel-grid">
-              {displayedChannels.map((channel) => (
-                <ChannelCard
-                  key={channel.id}
-                  channel={channel}
-                  onToggleCompare={handleToggleCompare}
-                  isComparing={compareList.some((c) => c.id === channel.id)}
-                  compareDisabled={
-                    compareList.length >= MAX_COMPARE &&
-                    !compareList.some((c) => c.id === channel.id)
-                  }
-                  onToggleBookmark={handleToggleBookmark}
-                  isBookmarked={isBookmarked(channel.id)}
-                />
-              ))}
-            </div>
-
-            {!showSaved && nextPageToken && (
-              <div className="load-more-row">
-                <button
-                  className="load-more-btn"
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                >
-                  {loadingMore ? "Loading…" : "Load more channels"}
-                </button>
+                  <Dropdown
+                    ariaLabel="Filter by language"
+                    value={language}
+                    onChange={setLanguage}
+                    options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
+                  />
+                </div>
               </div>
             )}
-          </>
-        )}
+
+            {showSaved && (
+              <div className="toolbar">
+                <span className="toolbar-label">
+                  {bookmarks.length} saved channel{bookmarks.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+            )}
+
+            {error && !showSaved && <div className="error-state">{error}</div>}
+
+            {loading && !error && !showSaved && (
+              <div className="channel-grid">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonCard key={i} />
+                ))}
+              </div>
+            )}
+
+            {!loading && !error && displayedChannels.length === 0 && (
+              <div className="empty-state">
+                <Mascot variant="empty" width={220} />
+                <p className="empty-state-text">
+                  {showSaved
+                    ? "No saved channels yet — click the star on any channel card to save it here."
+                    : searchQuery
+                    ? `No channels found for "${searchQuery}". Try a broader keyword.`
+                    : "No channels found in this category yet."}
+                </p>
+              </div>
+            )}
+
+            {!loading && displayedChannels.length > 0 && (
+              <>
+                <div className="channel-grid">
+                  {displayedChannels.map((channel) => (
+                    <ChannelCard
+                      key={channel.id}
+                      channel={channel}
+                      onToggleCompare={handleToggleCompare}
+                      isComparing={compareList.some((c) => c.id === channel.id)}
+                      compareDisabled={
+                        compareList.length >= MAX_COMPARE &&
+                        !compareList.some((c) => c.id === channel.id)
+                      }
+                      onToggleBookmark={handleToggleBookmark}
+                      isBookmarked={isBookmarked(channel.id)}
+                    />
+                  ))}
+                </div>
+
+                {!showSaved && nextPageToken && (
+                  <div className="load-more-row">
+                    <button
+                      className="load-more-btn"
+                      onClick={handleLoadMore}
+                      disabled={loadingMore}
+                    >
+                      {loadingMore ? "Loading…" : "Load more channels"}
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        <Footer />
       </div>
 
       {compareList.length > 0 && (
@@ -319,8 +337,6 @@ export default function ChannelDiscoveryPage() {
       )}
 
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
-
-      <Footer />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import SearchBar from "./SearchBar.jsx";
 
 function getInitials(name) {
@@ -16,110 +16,86 @@ export default function Navbar({
   user,
   onLoginClick,
   onLogout,
-  searchPlaceholder = "Search any topic...",
+  searchPlaceholder = "Search...",
 }) {
-  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const closeMenu = () => setMobileMenuOpen(false);
-
   return (
-    <header className="navbar">
-      <div className="navbar-inner">
-        <div className="navbar-top-row">
-          <button
-            className="mobile-menu-toggle"
-            aria-label="Toggle navigation menu"
-            aria-expanded={mobileMenuOpen}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            ) : (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
-            )}
-          </button>
+    <header className="dashboard-topbar">
+      <div className="topbar-inner">
+        <button
+          className="mobile-menu-toggle"
+          aria-label="Toggle navigation menu"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          )}
+        </button>
 
-          <Link to="/" className="navbar-brand" onClick={closeMenu}>
-            <span className="brand-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="26" height="26" viewBox="0 0 512 512" fill="none">
-                <circle cx="256" cy="256" r="88" fill="none" stroke="var(--accent, #00F0D0)" strokeWidth="40" />
-                <path d="M 134 336 A 180 180 0 1 1 378 176" fill="none" stroke="var(--accent, #00F0D0)" strokeWidth="40" strokeLinecap="round" />
-                <path d="M 378 176 A 180 180 0 0 1 134 336" fill="none" stroke="var(--accent, #00F0D0)" strokeWidth="40" strokeLinecap="round" />
-                <g transform="translate(372, 140)">
-                  <rect x="-45" y="-45" width="90" height="90" rx="28" fill="var(--accent, #00F0D0)" />
-                  <circle cx="0" cy="0" r="18" fill="#070A0F" />
-                </g>
-                <g transform="translate(140, 372)">
-                  <rect x="-45" y="-45" width="90" height="90" rx="28" fill="var(--accent, #00F0D0)" />
-                  <circle cx="0" cy="0" r="18" fill="#070A0F" />
-                </g>
-              </svg>
-            </span>
-            DockOrbit
-          </Link>
-
-          <div className="navbar-account">
-            {user ? (
-              <div className="profile-menu">
-                <button className="profile-avatar-btn" title={user.name}>
-                  {user.avatarData ? (
-                    <img src={user.avatarData} alt={user.name} className="profile-avatar-img" />
-                  ) : (
-                    getInitials(user.name)
-                  )}
-                </button>
-                <button className="profile-logout-btn" onClick={() => { closeMenu(); onLogout(); }}>
-                  Log out
-                </button>
-              </div>
-            ) : (
-              <button className="navbar-login-icon-btn" onClick={() => { closeMenu(); onLoginClick(); }} aria-label="Log in">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                <span className="login-btn-text">Log in / Sign up</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        <nav className={`navbar-pages ${mobileMenuOpen ? "mobile-open" : ""}`}>
-          <Link
-            to="/"
-            className={`navbar-page-link ${location.pathname === "/" ? "active" : ""}`}
-            onClick={closeMenu}
-          >
-            Channels
-          </Link>
-          <Link
-            to="/playlists"
-            className={`navbar-page-link ${location.pathname === "/playlists" ? "active" : ""}`}
-            onClick={closeMenu}
-          >
-            Playlist Finder
-          </Link>
-          <Link
-            to="/check"
-            className={`navbar-page-link ${location.pathname === "/check" ? "active" : ""}`}
-            onClick={closeMenu}
-          >
-            Check Score
-          </Link>
-        </nav>
-
-        <div className="navbar-search">
+        <div className="topbar-search-wrap">
           <SearchBar onSearch={onSearch} onClear={onClear} placeholder={searchPlaceholder} />
         </div>
+
+        <div className="topbar-right-actions">
+          <button className="topbar-icon-btn" title="Add Item" aria-label="Add item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+          </button>
+
+          <button className="topbar-icon-btn" title="Notifications" aria-label="Notifications">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </button>
+
+          <Link to="/about" className="topbar-icon-btn" title="Settings" aria-label="Settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </Link>
+
+          {user ? (
+            <button className="topbar-user-avatar" title={user.name} onClick={onLogout}>
+              {user.avatarData ? (
+                <img src={user.avatarData} alt={user.name} />
+              ) : (
+                getInitials(user.name)
+              )}
+            </button>
+          ) : (
+            <button className="topbar-user-avatar" title="Sign In" onClick={onLoginClick}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
+
+      {mobileMenuOpen && (
+        <div className="mobile-dropdown-menu">
+          <Link to="/" className="mobile-menu-item" onClick={() => setMobileMenuOpen(false)}>Home</Link>
+          <Link to="/playlists" className="mobile-menu-item" onClick={() => setMobileMenuOpen(false)}>Playlists</Link>
+          <Link to="/check" className="mobile-menu-item" onClick={() => setMobileMenuOpen(false)}>Check Trust</Link>
+          <Link to="/about" className="mobile-menu-item" onClick={() => setMobileMenuOpen(false)}>Settings</Link>
+        </div>
+      )}
     </header>
   );
 }
