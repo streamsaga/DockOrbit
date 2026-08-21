@@ -48,10 +48,19 @@ export default function Navbar({
           </button>
 
           <Link to="/" className="navbar-brand" onClick={closeMenu}>
-            <span className="brand-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.2">
-                <circle cx="12" cy="12" r="9" strokeOpacity="0.4" />
-                <path d="M12 3a9 9 0 0 1 9 9" strokeLinecap="round" />
+            <span className="brand-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="26" height="26" viewBox="0 0 512 512" fill="none">
+                <circle cx="256" cy="256" r="88" fill="none" stroke="var(--accent, #00F0D0)" strokeWidth="40" />
+                <path d="M 134 336 A 180 180 0 1 1 378 176" fill="none" stroke="var(--accent, #00F0D0)" strokeWidth="40" strokeLinecap="round" />
+                <path d="M 378 176 A 180 180 0 0 1 134 336" fill="none" stroke="var(--accent, #00F0D0)" strokeWidth="40" strokeLinecap="round" />
+                <g transform="translate(372, 140)">
+                  <rect x="-45" y="-45" width="90" height="90" rx="28" fill="var(--accent, #00F0D0)" />
+                  <circle cx="0" cy="0" r="18" fill="#070A0F" />
+                </g>
+                <g transform="translate(140, 372)">
+                  <rect x="-45" y="-45" width="90" height="90" rx="28" fill="var(--accent, #00F0D0)" />
+                  <circle cx="0" cy="0" r="18" fill="#070A0F" />
+                </g>
               </svg>
             </span>
             DockOrbit
