@@ -7,7 +7,7 @@ import SkeletonCard from "../components/SkeletonCard.jsx";
 import AuthModal from "../components/AuthModal.jsx";
 import Navbar from "../components/Navbar.jsx";
 import DashboardSidebar from "../components/DashboardSidebar.jsx";
-import DashboardWidgets from "../components/DashboardWidgets.jsx";
+import HeroSearchSection from "../components/HeroSearchSection.jsx";
 import Mascot from "../components/illustrations/Mascot.jsx";
 import Footer from "../components/Footer.jsx";
 import { useBookmarks } from "../hooks/useBookmarks.js";
@@ -164,7 +164,7 @@ export default function ChannelDiscoveryPage() {
   const displayedChannels = showSaved ? bookmarks : channels;
 
   return (
-    <div className="dashboard-container">
+    <div className="app-shell flex flex-col md:flex-row min-h-screen bg-background text-on-background antialiased">
       <DashboardSidebar
         user={user}
         onLoginClick={() => setShowAuthModal(true)}
@@ -173,152 +173,152 @@ export default function ChannelDiscoveryPage() {
         savedCount={bookmarks.length}
       />
 
-      <div className="dashboard-main-area">
+      <main className="flex-1 md:ml-60 p-4 md:p-12 bg-background min-h-screen">
         <Navbar
-          onSearch={handleSearch}
-          onClear={handleClearSearch}
           user={user}
           onLoginClick={() => setShowAuthModal(true)}
           onLogout={logout}
         />
 
-        <div className="dashboard-body">
-          <DashboardWidgets onCategorySelect={handleCategorySelect} />
+        <HeroSearchSection
+          onSearch={handleSearch}
+          onClear={handleClearSearch}
+          initialQuery={searchQuery || ""}
+        />
 
-          <div className="subnav">
-            {categories.length > 0 && !searchQuery && !showSaved && (
-              <CategoryPicker
-                categories={categories}
-                activeCategory={activeCategory}
-                onSelect={handleCategorySelect}
-              />
-            )}
-            <button
-              className={`saved-nav-btn ${showSaved ? "active" : ""}`}
-              onClick={handleSavedNavClick}
-            >
-              ★ Saved ({bookmarks.length})
-            </button>
-          </div>
+        <div className="subnav mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          {categories.length > 0 && !searchQuery && !showSaved && (
+            <CategoryPicker
+              categories={categories}
+              activeCategory={activeCategory}
+              onSelect={handleCategorySelect}
+            />
+          )}
+          <button
+            className={`saved-nav-btn ${showSaved ? "active" : ""}`}
+            onClick={handleSavedNavClick}
+          >
+            ★ Saved ({bookmarks.length})
+          </button>
+        </div>
 
-          <div className="page-content">
-            {(categories.length > 0 || searchQuery) && !showSaved && (
-              <div className="toolbar">
-                <span className="toolbar-label">
-                  {searchQuery
-                    ? `${channels.length} result${channels.length !== 1 ? "s" : ""} for "${searchQuery}"`
-                    : `${channels.length} channel${channels.length !== 1 ? "s" : ""} found`}
-                </span>
+        <div className="page-content">
+          {(categories.length > 0 || searchQuery) && !showSaved && (
+            <div className="toolbar mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+              <span className="toolbar-label text-sm text-on-surface-variant font-medium">
+                {searchQuery
+                  ? `${channels.length} result${channels.length !== 1 ? "s" : ""} for "${searchQuery}"`
+                  : `${channels.length} channel${channels.length !== 1 ? "s" : ""} found`}
+              </span>
 
-                <div className="toolbar-filters">
-                  <Dropdown
-                    ariaLabel="Sort channels"
-                    value={sort}
-                    onChange={setSort}
-                    options={[
-                      { value: "trustScore", label: "Sort by Trust Score" },
-                      { value: "subscribers", label: "Sort by Subscribers" },
-                      { value: "recent", label: "Sort by Recent Activity" },
-                    ]}
-                  />
+              <div className="toolbar-filters flex flex-wrap items-center gap-3">
+                <Dropdown
+                  ariaLabel="Sort channels"
+                  value={sort}
+                  onChange={setSort}
+                  options={[
+                    { value: "trustScore", label: "Sort by Trust Score" },
+                    { value: "subscribers", label: "Sort by Subscribers" },
+                    { value: "recent", label: "Sort by Recent Activity" },
+                  ]}
+                />
 
-                  <Dropdown
-                    ariaLabel="Filter by country"
-                    value={country}
-                    onChange={setCountry}
-                    options={COUNTRIES.map((c) => ({ value: c.code, label: c.label }))}
-                  />
+                <Dropdown
+                  ariaLabel="Filter by country"
+                  value={country}
+                  onChange={setCountry}
+                  options={COUNTRIES.map((c) => ({ value: c.code, label: c.label }))}
+                />
 
-                  <Dropdown
-                    ariaLabel="Filter by language"
-                    value={language}
-                    onChange={setLanguage}
-                    options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
-                  />
-                </div>
+                <Dropdown
+                  ariaLabel="Filter by language"
+                  value={language}
+                  onChange={setLanguage}
+                  options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
+                />
               </div>
-            )}
+            </div>
+          )}
 
-            {showSaved && (
-              <div className="toolbar">
-                <span className="toolbar-label">
-                  {bookmarks.length} saved channel{bookmarks.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-            )}
+          {showSaved && (
+            <div className="toolbar mb-6">
+              <span className="toolbar-label text-sm text-on-surface-variant font-medium">
+                {bookmarks.length} saved channel{bookmarks.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+          )}
 
-            {error && !showSaved && <div className="error-state">{error}</div>}
+          {error && !showSaved && <div className="error-state text-red-500 p-4 mb-4">{error}</div>}
 
-            {loading && !error && !showSaved && (
+          {loading && !error && !showSaved && (
+            <div className="channel-grid">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </div>
+          )}
+
+          {!loading && !error && displayedChannels.length === 0 && (
+            <div className="empty-state text-center py-12">
+              <Mascot variant="empty" width={220} />
+              <p className="empty-state-text mt-4 text-on-surface-variant">
+                {showSaved
+                  ? "No saved channels yet — click the star on any channel card to save it here."
+                  : searchQuery
+                  ? `No channels found for "${searchQuery}". Try a broader keyword.`
+                  : "No channels found in this category yet."}
+              </p>
+            </div>
+          )}
+
+          {!loading && displayedChannels.length > 0 && (
+            <>
               <div className="channel-grid">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <SkeletonCard key={i} />
+                {displayedChannels.map((channel) => (
+                  <ChannelCard
+                    key={channel.id}
+                    channel={channel}
+                    onToggleCompare={handleToggleCompare}
+                    isComparing={compareList.some((c) => c.id === channel.id)}
+                    compareDisabled={
+                      compareList.length >= MAX_COMPARE &&
+                      !compareList.some((c) => c.id === channel.id)
+                    }
+                    onToggleBookmark={handleToggleBookmark}
+                    isBookmarked={isBookmarked(channel.id)}
+                  />
                 ))}
               </div>
-            )}
 
-            {!loading && !error && displayedChannels.length === 0 && (
-              <div className="empty-state">
-                <Mascot variant="empty" width={220} />
-                <p className="empty-state-text">
-                  {showSaved
-                    ? "No saved channels yet — click the star on any channel card to save it here."
-                    : searchQuery
-                    ? `No channels found for "${searchQuery}". Try a broader keyword.`
-                    : "No channels found in this category yet."}
-                </p>
-              </div>
-            )}
-
-            {!loading && displayedChannels.length > 0 && (
-              <>
-                <div className="channel-grid">
-                  {displayedChannels.map((channel) => (
-                    <ChannelCard
-                      key={channel.id}
-                      channel={channel}
-                      onToggleCompare={handleToggleCompare}
-                      isComparing={compareList.some((c) => c.id === channel.id)}
-                      compareDisabled={
-                        compareList.length >= MAX_COMPARE &&
-                        !compareList.some((c) => c.id === channel.id)
-                      }
-                      onToggleBookmark={handleToggleBookmark}
-                      isBookmarked={isBookmarked(channel.id)}
-                    />
-                  ))}
+              {!showSaved && nextPageToken && (
+                <div className="load-more-row text-center mt-8">
+                  <button
+                    className="load-more-btn bg-primary text-on-primary px-8 py-3 rounded-full font-medium"
+                    onClick={handleLoadMore}
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? "Loading…" : "Load more channels"}
+                  </button>
                 </div>
-
-                {!showSaved && nextPageToken && (
-                  <div className="load-more-row">
-                    <button
-                      className="load-more-btn"
-                      onClick={handleLoadMore}
-                      disabled={loadingMore}
-                    >
-                      {loadingMore ? "Loading…" : "Load more channels"}
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+              )}
+            </>
+          )}
         </div>
 
         <Footer />
-      </div>
+      </main>
 
       {compareList.length > 0 && (
-        <div className="compare-bar">
-          <span className="compare-bar-text">
+        <div className="compare-bar fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-surface shadow-lg rounded-full px-6 py-3 border border-outline-variant flex items-center gap-4">
+          <span className="compare-bar-text text-sm font-medium text-on-background">
             {compareList.length} of {MAX_COMPARE} selected for comparison
           </span>
-          <div className="compare-bar-actions">
-            <button className="compare-bar-clear" onClick={handleClearCompare}>
+          <div className="compare-bar-actions flex items-center gap-2">
+            <button className="compare-bar-clear text-xs px-3 py-1.5 rounded-full border" onClick={handleClearCompare}>
               Clear
             </button>
             <button
-              className="compare-bar-view"
+              className="compare-bar-view bg-primary text-on-primary text-xs px-4 py-1.5 rounded-full font-bold"
               onClick={() => setShowCompareModal(true)}
               disabled={compareList.length < 2}
             >
