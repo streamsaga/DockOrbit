@@ -16,10 +16,13 @@ export default function BookmarksPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ fontSize: '32px', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
-            Your Saved Library
-          </h1>
-          <p style={{ fontSize: '15px', color: 'var(--text-muted)', margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '28px' }}>🔖</span>
+            <h1 style={{ fontSize: '32px', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
+              Your Saved Library
+            </h1>
+          </div>
+          <p style={{ fontSize: '15px', color: 'var(--text-muted)', margin: '6px 0 0 0' }}>
             Organize, monitor, and compare your saved channels and learning playlists.
           </p>
         </div>

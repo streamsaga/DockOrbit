@@ -3,6 +3,8 @@ import { CHANNELS } from '../data/dockorbitData.js';
 import ChannelCard from '../components/ChannelCard.jsx';
 import FilterBar from '../components/FilterBar.jsx';
 
+const PAGE_SIZE = 6;
+
 export default function ChannelDiscoveryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -11,34 +13,54 @@ export default function ChannelDiscoveryPage() {
   const [sortBy, setSortBy] = useState('Quality');
   const [viewMode, setViewMode] = useState('grid');
 
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const filteredChannels = useMemo(() => {
     return CHANNELS.filter(ch => {
       const matchesSearch = ch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             ch.category.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCat = selectedCategory === 'All' || ch.category === selectedCategory;
       const matchesCountry = selectedCountry === 'All' || ch.country === selectedCountry;
-      const matchesScore = ch.qualityScore >= parseInt(minScore);
+      const matchesScore = (ch.qualityScore || ch.trustScore || 0) >= parseInt(minScore);
 
       return matchesSearch && matchesCat && matchesCountry && matchesScore;
     }).sort((a, b) => {
-      if (sortBy === 'Quality') return b.qualityScore - a.qualityScore;
-      if (sortBy === 'Most Engaged') return b.engagementValue - a.engagementValue;
-      if (sortBy === 'Most Viewed') return b.avgViewsCount - a.avgViewsCount;
-      if (sortBy === 'Fast Growing') return b.subscribersCount - a.subscribersCount;
-      if (sortBy === 'Most Consistent') return b.consistencyScore - a.consistencyScore;
+      if (sortBy === 'Quality') return (b.qualityScore || 0) - (a.qualityScore || 0);
+      if (sortBy === 'Most Engaged') return (b.engagementValue || 0) - (a.engagementValue || 0);
+      if (sortBy === 'Most Viewed') return (b.avgViewsCount || 0) - (a.avgViewsCount || 0);
+      if (sortBy === 'Fast Growing') return (b.subscribersCount || 0) - (a.subscribersCount || 0);
+      if (sortBy === 'Most Consistent') return (b.consistencyScore || 0) - (a.consistencyScore || 0);
       return 0;
     });
   }, [searchQuery, selectedCategory, selectedCountry, minScore, sortBy]);
 
+  const visibleChannels = useMemo(() => {
+    return filteredChannels.slice(0, visibleCount);
+  }, [filteredChannels, visibleCount]);
+
+  const hasMore = visibleCount < filteredChannels.length;
+
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount(prev => prev + PAGE_SIZE);
+      setLoadingMore(false);
+    }, 350);
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', width: '100%', maxWidth: '100%' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ fontSize: '32px', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
-            Explore Channels
-          </h1>
-          <p style={{ fontSize: '15px', color: 'var(--text-muted)', margin: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '28px' }}>📺</span>
+            <h1 style={{ fontSize: '32px', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
+              Explore Channels
+            </h1>
+          </div>
+          <p style={{ fontSize: '15px', color: 'var(--text-muted)', margin: '6px 0 0 0' }}>
             Browse YouTube channels ranked by objective quality, engagement rates, and content consistency.
           </p>
         </div>
@@ -77,9 +99,9 @@ export default function ChannelDiscoveryPage() {
       />
 
       {/* Grid or List Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(320px, 1fr))' : '1fr', gap: '20px' }}>
-        {filteredChannels.length > 0 ? (
-          filteredChannels.map((channel, idx) => (
+      <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(280px, 1fr))' : '1fr', gap: '20px' }}>
+        {visibleChannels.length > 0 ? (
+          visibleChannels.map((channel, idx) => (
             <ChannelCard key={channel.id} channel={channel} rank={idx + 1} />
           ))
         ) : (
@@ -94,6 +116,20 @@ export default function ChannelDiscoveryPage() {
           </div>
         )}
       </div>
+
+      {/* Load More Button */}
+      {hasMore && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+          <button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            className="soft-btn-primary"
+            style={{ padding: '12px 28px', fontSize: '14px', minWidth: '180px', justifyContent: 'center' }}
+          >
+            {loadingMore ? 'Loading...' : `Load More Channels (${filteredChannels.length - visibleCount} remaining)`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

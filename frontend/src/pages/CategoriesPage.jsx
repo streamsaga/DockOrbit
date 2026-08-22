@@ -6,11 +6,14 @@ export default function CategoriesPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       <div>
-        <h1 style={{ fontSize: '32px', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
-          Browse by Category
-        </h1>
-        <p style={{ fontSize: '15px', color: 'var(--text-muted)', margin: 0 }}>
-          Explore evaluated YouTube domains across 10 specialized fields of knowledge and entertainment.
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '28px' }}>🏷️</span>
+          <h1 style={{ fontSize: '32px', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}>
+            Browse by Category
+          </h1>
+        </div>
+        <p style={{ fontSize: '15px', color: 'var(--text-muted)', margin: '6px 0 0 0' }}>
+          Explore evaluated YouTube domains across specialized fields of knowledge and creator content.
         </p>
       </div>
 
