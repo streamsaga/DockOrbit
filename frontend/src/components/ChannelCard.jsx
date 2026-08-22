@@ -1,142 +1,99 @@
-import { useState } from "react";
-import TrustRing from "./TrustRing.jsx";
-import ScoreBreakdown from "./ScoreBreakdown.jsx";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { useApp } from '../context/AppContext.jsx';
+import QualityGauge from './QualityGauge.jsx';
 
-function formatCount(n) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n || 0);
-}
-
-export default function ChannelCard({
-  channel,
-  onToggleCompare,
-  isComparing,
-  compareDisabled,
-  onToggleBookmark,
-  isBookmarked,
-}) {
-  const [showQuickStats, setShowQuickStats] = useState(false);
-
-  // Engagement calculation fallback
-  const engagementRate = channel.scoreBreakdown?.engagement
-    ? `${(channel.scoreBreakdown.engagement / 10).toFixed(1)}%`
-    : "8.4%";
-
-  const growthRate = channel.scoreBreakdown?.consistency
-    ? `+${Math.max(2, Math.round(channel.scoreBreakdown.consistency / 5))}%`
-    : "+12%";
+export default function ChannelCard({ channel, rank = null }) {
+  const { isBookmarked, toggleBookmark, isCompareChannel, toggleCompareChannel } = useApp();
+  const bookmarked = isBookmarked(channel.id, 'channel');
+  const compared = isCompareChannel(channel.id);
 
   return (
-    <div className="channel-card neumorphic-card">
-      <div className="channel-card-top flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <div className="soft-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Top Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          {rank && (
+            <div className="rank-badge">
+              #{rank}
+            </div>
+          )}
           <img
-            className="channel-avatar w-12 h-12 rounded-full object-cover border border-outline-variant"
-            src={channel.thumbnail}
-            alt={`${channel.name} avatar`}
+            src={channel.avatar}
+            alt={channel.name}
+            style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border-light)' }}
           />
           <div>
-            <div className="flex items-center gap-1.5">
-              <h3 className="channel-name font-bold text-on-background text-base leading-tight">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Link to={`/channel/${channel.id}`} style={{ fontWeight: 700, fontSize: '16px', color: 'var(--text-main)' }}>
                 {channel.name}
-              </h3>
+              </Link>
               {channel.verified && (
-                <span className="verified-badge text-xs text-primary font-bold" title="Verified">
-                  ✓
-                </span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#4f46e5">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                </svg>
               )}
             </div>
-            <p className="channel-meta text-xs text-on-surface-variant flex items-center gap-1">
-              <span>📍 {channel.country || "US"}</span>
+            <div style={{ fontSize: '12.5px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+              <span>{channel.category}</span>
               <span>•</span>
-              <span>{channel.category || "Technology"}</span>
-            </p>
+              <span>{channel.country}</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <TrustRing score={channel.trustScore} size={48} />
-          <button
-            className={`bookmark-btn p-1.5 rounded-full text-on-surface-variant hover:text-primary transition-colors ${
-              isBookmarked ? "active text-yellow-500" : ""
-            }`}
-            onClick={() => onToggleBookmark(channel)}
-            aria-label={isBookmarked ? "Remove from saved" : "Save channel"}
-          >
-            {isBookmarked ? "★" : "☆"}
-          </button>
-        </div>
+        {/* Mini Gauge */}
+        <QualityGauge score={channel.qualityScore} size={54} strokeWidth={6} showLabel={false} />
       </div>
 
-      {channel.description && (
-        <p className="channel-desc text-xs text-on-surface-variant line-clamp-2 my-2">
-          {channel.description}
-        </p>
-      )}
-
-      {/* 3 Metrics Box matching Image 2 reference */}
-      <div className="stat-row bg-surface-container-low rounded-xl p-3 flex items-center justify-between text-center my-2 border border-outline-variant">
+      {/* Metrics Row */}
+      <div className="soft-inset" style={{ padding: '12px 14px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', fontSize: '12.5px' }}>
         <div>
-          <span className="block text-[10px] text-on-surface-variant font-medium uppercase">Subscribers</span>
-          <span className="font-bold text-on-background text-sm">{formatCount(channel.subscribers)}</span>
-        </div>
-        <div className="border-x border-outline-variant/40 px-3">
-          <span className="block text-[10px] text-on-surface-variant font-medium uppercase">Engagement</span>
-          <span className="font-bold text-primary text-sm">{engagementRate}</span>
+          <span style={{ color: 'var(--text-subtle)', display: 'block', marginBottom: '2px', fontSize: '11.5px' }}>Subscribers</span>
+          <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{channel.subscribers}</span>
         </div>
         <div>
-          <span className="block text-[10px] text-on-surface-variant font-medium uppercase">Growth (30d)</span>
-          <span className="font-bold text-emerald-600 text-sm">{growthRate}</span>
+          <span style={{ color: 'var(--text-subtle)', display: 'block', marginBottom: '2px', fontSize: '11.5px' }}>Avg Views</span>
+          <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{channel.avgViews}</span>
+        </div>
+        <div>
+          <span style={{ color: 'var(--text-subtle)', display: 'block', marginBottom: '2px', fontSize: '11.5px' }}>Engagement Rate</span>
+          <span style={{ fontWeight: 700, color: '#10b981' }}>{channel.engagementRate}</span>
+        </div>
+        <div>
+          <span style={{ color: 'var(--text-subtle)', display: 'block', marginBottom: '2px', fontSize: '11.5px' }}>Upload Frequency</span>
+          <span style={{ fontWeight: 700, color: 'var(--text-main)' }}>{channel.uploadConsistency}</span>
         </div>
       </div>
 
-      {/* Tags row */}
-      <div className="flex flex-wrap gap-1.5 my-1">
-        <span className="tag-chip text-[11px] font-medium px-2.5 py-1 rounded-lg bg-surface-container text-on-surface-variant">
-          {channel.category || "Reviews"}
-        </span>
-        <span className="tag-chip text-[11px] font-medium px-2.5 py-1 rounded-lg bg-surface-container text-on-surface-variant">
-          {channel.language?.toUpperCase() || "English"}
-        </span>
-      </div>
-
-      <button
-        className="quick-view-stats-btn text-xs font-semibold text-primary hover:underline self-start mt-1"
-        onClick={() => setShowQuickStats(!showQuickStats)}
-      >
-        {showQuickStats ? "▲ Hide Breakdown" : "▼ Detailed Breakdown"}
-      </button>
-
-      {showQuickStats && (
-        <div className="quick-stats-expanded mt-2 pt-2 border-t border-outline-variant">
-          <ScoreBreakdown breakdown={channel.scoreBreakdown} />
-        </div>
-      )}
-
-      <div className="card-actions flex items-center justify-between pt-2 border-t border-outline-variant mt-2">
-        <label className={`compare-checkbox text-xs font-medium flex items-center gap-1.5 cursor-pointer text-on-surface-variant ${compareDisabled ? "opacity-50" : ""}`}>
-          <input
-            type="checkbox"
-            checked={isComparing}
-            disabled={compareDisabled}
-            onChange={() => onToggleCompare(channel)}
-            className="rounded border-outline-variant text-primary focus:ring-primary"
-          />
-          <span>Compare</span>
-        </label>
-
-        <a
-          className="visit-btn text-xs font-bold bg-primary text-on-primary px-4 py-2 rounded-lg hover:bg-primary-container transition-all"
-          href={
-            channel.channelUrl ||
-            `https://youtube.com/results?search_query=${encodeURIComponent(channel.name)}`
-          }
-          target="_blank"
-          rel="noopener noreferrer"
+      {/* Action Footer */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', paddingTop: '4px' }}>
+        <Link to={`/channel/${channel.id}`} className="soft-btn-primary" style={{ flex: 1, justifyContent: 'center', fontSize: '13px', padding: '8px 12px' }}>
+          View Analytics
+        </Link>
+        <button
+          onClick={() => toggleCompareChannel(channel.id)}
+          className="soft-btn"
+          style={{
+            padding: '8px 12px',
+            fontSize: '12.5px',
+            background: compared ? 'var(--primary-light)' : 'var(--bg-surface)',
+            color: compared ? 'var(--primary)' : 'var(--text-main)'
+          }}
+          title="Compare channel side-by-side"
         >
-          View on Platform &rarr;
-        </a>
+          {compared ? 'Compared' : 'Compare'}
+        </button>
+        <button
+          onClick={() => toggleBookmark(channel.id, 'channel')}
+          className="soft-btn"
+          style={{ padding: '8px 10px', color: bookmarked ? '#ef4444' : 'var(--text-muted)' }}
+          title={bookmarked ? 'Remove Bookmark' : 'Save Bookmark'}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill={bookmarked ? '#ef4444' : 'none'} stroke="currentColor" strokeWidth="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          </svg>
+        </button>
       </div>
     </div>
   );

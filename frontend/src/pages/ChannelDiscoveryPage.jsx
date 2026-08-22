@@ -1,354 +1,99 @@
-import { useEffect, useState } from "react";
-import Dropdown from "../components/Dropdown.jsx";
-import ChannelCard from "../components/ChannelCard.jsx";
-import CompareModal from "../components/CompareModal.jsx";
-import SkeletonCard from "../components/SkeletonCard.jsx";
-import AuthModal from "../components/AuthModal.jsx";
-import Navbar from "../components/Navbar.jsx";
-import DashboardSidebar from "../components/DashboardSidebar.jsx";
-import TopLeaderboardWidget from "../components/TopLeaderboardWidget.jsx";
-import Mascot from "../components/illustrations/Mascot.jsx";
-import Footer from "../components/Footer.jsx";
-import { useBookmarks } from "../hooks/useBookmarks.js";
-import { useAuth } from "../context/AuthContext.jsx";
-import { useToast } from "../context/ToastContext.jsx";
-import { COUNTRIES, LANGUAGES } from "../data/filterOptions.js";
-
-const MAX_COMPARE = 3;
+import React, { useState, useMemo } from 'react';
+import { CHANNELS } from '../data/dockorbitData.js';
+import ChannelCard from '../components/ChannelCard.jsx';
+import FilterBar from '../components/FilterBar.jsx';
 
 export default function ChannelDiscoveryPage() {
-  const [categories, setCategories] = useState([]);
-  const [activeCategory, setActiveCategory] = useState(null);
-  const [searchQuery, setSearchQuery] = useState(null);
-  const [channels, setChannels] = useState([]);
-  const [sort, setSort] = useState("trustScore");
-  const [country, setCountry] = useState("");
-  const [language, setLanguage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState(null);
-  const [nextPageToken, setNextPageToken] = useState(null);
-  const [compareList, setCompareList] = useState([]);
-  const [showCompareModal, setShowCompareModal] = useState(false);
-  const [showSaved, setShowSaved] = useState(false);
-  const { bookmarks, isBookmarked, toggleBookmark, isLoggedIn } = useBookmarks();
-  const { user, logout } = useAuth();
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const { showToast } = useToast();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCountry, setSelectedCountry] = useState('All');
+  const [minScore, setMinScore] = useState('0');
+  const [sortBy, setSortBy] = useState('Quality');
+  const [viewMode, setViewMode] = useState('grid');
 
-  useEffect(() => {
-    fetch("/api/categories")
-      .then((res) => res.json())
-      .then((data) => {
-        setCategories(data);
-        if (data.length > 0) setActiveCategory(data[0].slug);
-      })
-      .catch(() => setError("Could not reach backend. Is it running on port 5000?"));
-  }, []);
+  const filteredChannels = useMemo(() => {
+    return CHANNELS.filter(ch => {
+      const matchesSearch = ch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            ch.category.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCat = selectedCategory === 'All' || ch.category === selectedCategory;
+      const matchesCountry = selectedCountry === 'All' || ch.country === selectedCountry;
+      const matchesScore = ch.qualityScore >= parseInt(minScore);
 
-  useEffect(() => {
-    if (showSaved) return;
-    const url = buildUrl();
-    if (!url) return;
-
-    setLoading(true);
-    setError(null);
-    setChannels([]);
-    setNextPageToken(null);
-
-    fetch(url)
-      .then((res) => {
-        if (!res.ok) throw new Error("Request failed");
-        return res.json();
-      })
-      .then((data) => {
-        setChannels(data.channels || []);
-        setNextPageToken(data.nextPageToken || null);
-      })
-      .catch(() =>
-        setError(
-          searchQuery ? "Search failed. Try a different keyword." : "Could not load channels for this category."
-        )
-      )
-      .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCategory, searchQuery, sort, showSaved, country, language]);
-
-  function buildUrl(pageToken = "") {
-    const pageParam = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : "";
-    const countryParam = country ? `&country=${country}` : "";
-    const languageParam = language ? `&language=${language}` : "";
-    const extraParams = `${pageParam}${countryParam}${languageParam}`;
-    if (searchQuery) {
-      return `/api/search?q=${encodeURIComponent(searchQuery)}&sort=${sort}${extraParams}`;
-    }
-    if (activeCategory) {
-      return `/api/channels?category=${activeCategory}&sort=${sort}${extraParams}`;
-    }
-    return null;
-  }
-
-  function handleLoadMore() {
-    if (!nextPageToken) return;
-    const url = buildUrl(nextPageToken);
-    if (!url) return;
-
-    setLoadingMore(true);
-    fetch(url)
-      .then((res) => res.json())
-      .then((data) => {
-        setChannels((prev) => {
-          const seen = new Set(prev.map((c) => c.id));
-          const additions = (data.channels || []).filter((c) => !seen.has(c.id));
-          return [...prev, ...additions];
-        });
-        setNextPageToken(data.nextPageToken || null);
-      })
-      .catch(() => setError("Could not load more channels."))
-      .finally(() => setLoadingMore(false));
-  }
-
-  function handleSearch(query) {
-    setShowSaved(false);
-    setSearchQuery(query);
-  }
-
-  function handleClearSearch() {
-    setSearchQuery(null);
-  }
-
-  function handleCategorySelect(slug) {
-    setShowSaved(false);
-    setSearchQuery(null);
-    setActiveCategory(slug);
-  }
-
-  function handleToggleCompare(channel) {
-    setCompareList((prev) => {
-      const exists = prev.find((c) => c.id === channel.id);
-      if (exists) return prev.filter((c) => c.id !== channel.id);
-      if (prev.length >= MAX_COMPARE) {
-        showToast(`You can compare up to ${MAX_COMPARE} channels at a time`, "info");
-        return prev;
-      }
-      return [...prev, channel];
+      return matchesSearch && matchesCat && matchesCountry && matchesScore;
+    }).sort((a, b) => {
+      if (sortBy === 'Quality') return b.qualityScore - a.qualityScore;
+      if (sortBy === 'Most Engaged') return b.engagementValue - a.engagementValue;
+      if (sortBy === 'Most Viewed') return b.avgViewsCount - a.avgViewsCount;
+      if (sortBy === 'Fast Growing') return b.subscribersCount - a.subscribersCount;
+      if (sortBy === 'Most Consistent') return b.consistencyScore - a.consistencyScore;
+      return 0;
     });
-  }
-
-  function handleRemoveFromCompare(channelId) {
-    setCompareList((prev) => prev.filter((c) => c.id !== channelId));
-  }
-
-  function handleClearCompare() {
-    setCompareList([]);
-    setShowCompareModal(false);
-  }
-
-  function handleToggleBookmark(channel) {
-    if (!isLoggedIn) {
-      setShowAuthModal(true);
-      return;
-    }
-    toggleBookmark(channel);
-  }
-
-  function handleSavedNavClick() {
-    if (!isLoggedIn) {
-      setShowAuthModal(true);
-      return;
-    }
-    setShowSaved((v) => !v);
-  }
-
-  const displayedChannels = showSaved ? bookmarks : channels;
+  }, [searchQuery, selectedCategory, selectedCountry, minScore, sortBy]);
 
   return (
-    <div className="app-shell flex flex-col md:flex-row min-h-screen bg-background text-on-background antialiased">
-      <DashboardSidebar
-        user={user}
-        onLoginClick={() => setShowAuthModal(true)}
-        onLogout={logout}
-        onSavedClick={handleSavedNavClick}
-        savedCount={bookmarks.length}
-      />
-
-      <main className="flex-1 md:ml-60 p-4 md:p-10 bg-background min-h-screen">
-        <Navbar
-          onSearch={handleSearch}
-          onClear={handleClearSearch}
-          user={user}
-          onLoginClick={() => setShowAuthModal(true)}
-          onLogout={logout}
-        />
-
-        {/* Explore Channels Header Section (Matching Image 2 Reference) */}
-        <section className="explore-header mb-8">
-          <h1 className="font-display-lg text-display-lg font-bold text-on-background mb-2">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <h1 style={{ fontSize: '32px', fontWeight: 900, color: 'var(--text-main)', margin: '0 0 6px 0' }}>
             Explore Channels
           </h1>
-          <p className="text-body-md text-on-surface-variant text-base md:text-lg">
-            Discover high-quality video content creators based on intelligent metrics.
+          <p style={{ fontSize: '15px', color: 'var(--text-muted)', margin: 0 }}>
+            Browse YouTube channels ranked by objective quality, engagement rates, and content consistency.
           </p>
-        </section>
-
-        {/* Filter Bar (Matching Image 2 Reference) */}
-        <div className="filter-bar bg-surface neumorphic-card rounded-2xl p-3 mb-8 flex flex-wrap items-center justify-between gap-3 border border-surface-variant">
-          <div className="flex flex-wrap items-center gap-2">
-            {categories.length > 0 && (
-              <select
-                value={activeCategory || ""}
-                onChange={(e) => handleCategorySelect(e.target.value)}
-                className="bg-surface-container-low border border-outline-variant text-xs font-semibold px-3 py-2 rounded-xl text-on-background outline-none"
-              >
-                <option value="">All Categories</option>
-                {categories.map((cat) => (
-                  <option key={cat.slug} value={cat.slug}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            <Dropdown
-              ariaLabel="Filter by country"
-              value={country}
-              onChange={setCountry}
-              options={COUNTRIES.map((c) => ({ value: c.code, label: c.label }))}
-            />
-
-            <Dropdown
-              ariaLabel="Filter by language"
-              value={language}
-              onChange={setLanguage}
-              options={LANGUAGES.map((l) => ({ value: l.code, label: l.label }))}
-            />
-
-            <button className="category-chip active text-xs">
-              Any Q-Score
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-on-surface-variant font-medium">Sort by:</span>
-            <Dropdown
-              ariaLabel="Sort channels"
-              value={sort}
-              onChange={setSort}
-              options={[
-                { value: "trustScore", label: "Quality Score" },
-                { value: "subscribers", label: "Subscribers" },
-                { value: "recent", label: "Recent Activity" },
-              ]}
-            />
-          </div>
         </div>
 
-        {/* Main Content Layout: 2-Columns (Grid + Top 10 Leaderboard) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            {showSaved && (
-              <div className="toolbar mb-4">
-                <span className="toolbar-label text-sm text-on-surface-variant font-medium">
-                  {bookmarks.length} saved channel{bookmarks.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-            )}
-
-            {error && !showSaved && <div className="error-state text-red-500 p-4 mb-4">{error}</div>}
-
-            {loading && !error && !showSaved && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <SkeletonCard key={i} />
-                ))}
-              </div>
-            )}
-
-            {!loading && !error && displayedChannels.length === 0 && (
-              <div className="empty-state text-center py-12">
-                <Mascot variant="empty" width={220} />
-                <p className="empty-state-text mt-4 text-on-surface-variant">
-                  {showSaved
-                    ? "No saved channels yet — click the star on any channel card to save it here."
-                    : searchQuery
-                    ? `No channels found for "${searchQuery}". Try a broader keyword.`
-                    : "No channels found in this category yet."}
-                </p>
-              </div>
-            )}
-
-            {!loading && displayedChannels.length > 0 && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {displayedChannels.map((channel) => (
-                    <ChannelCard
-                      key={channel.id}
-                      channel={channel}
-                      onToggleCompare={handleToggleCompare}
-                      isComparing={compareList.some((c) => c.id === channel.id)}
-                      compareDisabled={
-                        compareList.length >= MAX_COMPARE &&
-                        !compareList.some((c) => c.id === channel.id)
-                      }
-                      onToggleBookmark={handleToggleBookmark}
-                      isBookmarked={isBookmarked(channel.id)}
-                    />
-                  ))}
-                </div>
-
-                {!showSaved && nextPageToken && (
-                  <div className="load-more-row text-center mt-8">
-                    <button
-                      className="load-more-btn bg-primary text-on-primary px-8 py-3 rounded-full font-bold shadow-md hover:bg-primary-container transition-all text-xs"
-                      onClick={handleLoadMore}
-                      disabled={loadingMore}
-                    >
-                      {loadingMore ? "Loading…" : "Load more channels"}
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Right Column: Top 10 Leaderboard Widget */}
-          <div className="lg:col-span-1">
-            <TopLeaderboardWidget />
-          </div>
+        {/* View Switcher */}
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button
+            onClick={() => setViewMode('grid')}
+            className="soft-btn"
+            style={{ padding: '8px 14px', background: viewMode === 'grid' ? 'var(--primary-light)' : 'var(--bg-surface)', color: viewMode === 'grid' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 700 }}
+          >
+            📱 Grid View
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className="soft-btn"
+            style={{ padding: '8px 14px', background: viewMode === 'list' ? 'var(--primary-light)' : 'var(--bg-surface)', color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 700 }}
+          >
+            📑 List View
+          </button>
         </div>
+      </div>
 
-        <Footer />
-      </main>
+      {/* Filter Engine */}
+      <FilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        selectedCountry={selectedCountry}
+        onCountryChange={setSelectedCountry}
+        minScore={minScore}
+        onMinScoreChange={setMinScore}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+      />
 
-      {compareList.length > 0 && (
-        <div className="compare-bar fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-surface shadow-xl rounded-full px-6 py-3 border border-outline-variant flex items-center gap-4">
-          <span className="compare-bar-text text-sm font-medium text-on-background">
-            {compareList.length} of {MAX_COMPARE} selected for comparison
-          </span>
-          <div className="compare-bar-actions flex items-center gap-2">
-            <button className="compare-bar-clear text-xs px-3 py-1.5 rounded-full border" onClick={handleClearCompare}>
-              Clear
-            </button>
-            <button
-              className="compare-bar-view bg-primary text-on-primary text-xs px-4 py-1.5 rounded-full font-bold"
-              onClick={() => setShowCompareModal(true)}
-              disabled={compareList.length < 2}
-            >
-              Compare {compareList.length >= 2 ? "now" : "(pick 1 more)"}
-            </button>
+      {/* Grid or List Layout */}
+      <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(320px, 1fr))' : '1fr', gap: '20px' }}>
+        {filteredChannels.length > 0 ? (
+          filteredChannels.map((channel, idx) => (
+            <ChannelCard key={channel.id} channel={channel} rank={idx + 1} />
+          ))
+        ) : (
+          <div className="soft-card-static" style={{ padding: '48px', textAlign: 'center', gridColumn: '1 / -1' }}>
+            <span style={{ fontSize: '32px' }}>🔍</span>
+            <h3 style={{ margin: '12px 0 6px 0', fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
+              No channels match your filters
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
+              Try adjusting your category, quality score, or search keywords.
+            </p>
           </div>
-        </div>
-      )}
-
-      {showCompareModal && (
-        <CompareModal
-          channels={compareList}
-          onClose={() => setShowCompareModal(false)}
-          onRemove={handleRemoveFromCompare}
-        />
-      )}
-
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+        )}
+      </div>
     </div>
   );
 }

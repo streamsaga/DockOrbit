@@ -1,104 +1,79 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useApp } from '../context/AppContext.jsx';
 
-function getInitials(name) {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  const first = parts[0]?.[0] || "";
-  const second = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (first + second).toUpperCase();
-}
+export default function Navbar({ onOpenMobileDrawer }) {
+  const { searchQuery, setSearchQuery, compareChannels, comparePlaylists, user } = useApp();
+  const [localQuery, setLocalQuery] = useState(searchQuery || '');
+  const navigate = useNavigate();
 
-export default function Navbar({ user, onLoginClick, onLogout }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (localQuery.trim()) {
+      setSearchQuery(localQuery.trim());
+      navigate(`/search?q=${encodeURIComponent(localQuery.trim())}`);
+    }
+  };
+
+  const totalCompareCount = compareChannels.length + comparePlaylists.length;
 
   return (
-    <header className="top-app-bar">
-      {/* Mobile Header Bar */}
-      <div className="mobile-header-bar flex md:hidden justify-between items-center w-full px-4 h-16 sticky top-0 z-50">
-        <Link to="/" className="font-bold text-xl text-primary flex items-center gap-2">
-          <span className="material-symbols-outlined text-[24px]">satellite_alt</span>
-          DockOrbit
-        </Link>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-1 hover:bg-surface-container-low rounded-full"
-            aria-label="Toggle Menu"
-          >
-            <span className="material-symbols-outlined text-2xl">menu</span>
-          </button>
-          <span className="material-symbols-outlined text-2xl p-1 cursor-pointer">notifications</span>
-          <span className="material-symbols-outlined text-2xl p-1 cursor-pointer">settings</span>
-          <div className="w-8 h-8 rounded-full border border-outline-variant overflow-hidden cursor-pointer">
-            {user?.avatarData ? (
-              <img src={user.avatarData} alt={user.name} className="w-full h-full object-cover" />
-            ) : (
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-                alt="User Profile"
-                className="w-full h-full object-cover"
-              />
-            )}
+    <header className="top-navbar">
+      {/* Mobile Menu Icon & Brand */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <button
+          onClick={onOpenMobileDrawer}
+          className="soft-btn mobile-only-btn"
+          style={{ padding: '8px', display: 'none' }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
+        <form onSubmit={handleSearchSubmit} style={{ display: 'flex', alignItems: 'center' }}>
+          <div className="soft-inset" style={{ display: 'flex', alignItems: 'center', padding: '6px 14px', width: '320px', gap: '8px' }}>
+            <span style={{ color: 'var(--text-subtle)' }}>🔍</span>
+            <input
+              type="text"
+              placeholder="Search channels, playlists, topics..."
+              value={localQuery}
+              onChange={(e) => setLocalQuery(e.target.value)}
+              style={{ border: 'none', background: 'none', outline: 'none', color: 'var(--text-main)', fontSize: '13.5px', width: '100%' }}
+            />
           </div>
-        </div>
+        </form>
       </div>
 
-      {/* Desktop Top Header Actions */}
-      <div className="hidden md:flex justify-between items-center mb-6">
-        <div className="flex-1 max-w-2xl"></div>
-        <div className="flex items-center gap-6">
-          <button className="text-outline hover:text-primary transition-colors" title="Notifications">
-            <span className="material-symbols-outlined text-2xl">notifications</span>
-          </button>
-          <Link to="/about" className="text-outline hover:text-primary transition-colors" title="Settings">
-            <span className="material-symbols-outlined text-2xl">settings</span>
-          </Link>
-          {user ? (
-            <div
-              className="w-10 h-10 rounded-full bg-surface-variant border-2 border-surface neumorphic-card overflow-hidden cursor-pointer flex items-center justify-center font-bold text-primary"
-              title={user.name}
-              onClick={onLogout}
-            >
-              {user.avatarData ? (
-                <img src={user.avatarData} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                getInitials(user.name)
-              )}
-            </div>
-          ) : (
-            <div
-              className="w-10 h-10 rounded-full bg-surface-variant border-2 border-surface neumorphic-card overflow-hidden cursor-pointer flex items-center justify-center text-primary"
-              title="Sign In"
-              onClick={onLoginClick}
-            >
-              <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-                alt="User Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
+      {/* Actions Right */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <Link to="/compare" className="soft-btn" style={{ padding: '8px 14px', position: 'relative' }}>
+          <span>📊 Compare</span>
+          {totalCompareCount > 0 && (
+            <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: 'var(--primary)', color: '#ffffff', fontSize: '10px', fontWeight: 800, padding: '2px 6px', borderRadius: '9999px' }}>
+              {totalCompareCount}
+            </span>
           )}
-        </div>
+        </Link>
+
+        <Link to="/analyzer" className="soft-btn-primary" style={{ padding: '8px 16px', fontSize: '13px' }}>
+          ⚡ Analyze Link
+        </Link>
+
+        <Link to="/user-dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img src={user.avatar} alt={user.name} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary-light)' }} />
+        </Link>
       </div>
 
-      {/* Mobile Drawer Menu */}
-      {mobileMenuOpen && (
-        <div className="mobile-menu-drawer md:hidden">
-          <Link to="/" className="mobile-drawer-item" onClick={() => setMobileMenuOpen(false)}>
-            <span className="material-symbols-outlined">explore</span> Discover
-          </Link>
-          <Link to="/playlists" className="mobile-drawer-item" onClick={() => setMobileMenuOpen(false)}>
-            <span className="material-symbols-outlined">playlist_play</span> Playlists
-          </Link>
-          <Link to="/check" className="mobile-drawer-item" onClick={() => setMobileMenuOpen(false)}>
-            <span className="material-symbols-outlined">analytics</span> Analyzer
-          </Link>
-          <Link to="/about" className="mobile-drawer-item" onClick={() => setMobileMenuOpen(false)}>
-            <span className="material-symbols-outlined">settings</span> Settings
-          </Link>
-        </div>
-      )}
+      <style>{`
+        @media (max-width: 1024px) {
+          .mobile-only-btn {
+            display: inline-flex !important;
+          }
+        }
+      `}</style>
     </header>
   );
 }
