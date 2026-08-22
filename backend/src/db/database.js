@@ -58,6 +58,9 @@ export async function ensureTables() {
   await pool.query(`
     ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 1;
   `);
+  await pool.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS interests TEXT[] DEFAULT '{}';
+  `);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS bookmarks (

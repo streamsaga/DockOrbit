@@ -63,41 +63,45 @@ export function AppProvider({ children }) {
     return bookmarks.some(item => item.id === id && item.type === type);
   };
 
-  const toggleCompareChannel = (id) => {
+  const toggleCompareChannel = (itemOrId) => {
+    const id = typeof itemOrId === 'object' ? itemOrId.id : itemOrId;
     setCompareChannels(prev => {
-      if (prev.includes(id)) {
-        showToast(`Removed from comparison`);
-        return prev.filter(i => i !== id);
+      const exists = prev.some(i => (typeof i === 'object' ? i.id : i) === id);
+      if (exists) {
+        showToast(`Removed from channel comparison`);
+        return prev.filter(i => (typeof i === 'object' ? i.id : i) !== id);
       } else {
         if (prev.length >= 4) {
           showToast(`Maximum 4 channels can be compared`);
           return prev;
         }
         showToast(`Added to channel comparison`);
-        return [...prev, id];
+        return [...prev, itemOrId];
       }
     });
   };
 
-  const isCompareChannel = (id) => compareChannels.includes(id);
+  const isCompareChannel = (id) => compareChannels.some(i => (typeof i === 'object' ? i.id : i) === id);
 
-  const toggleComparePlaylist = (id) => {
+  const toggleComparePlaylist = (itemOrId) => {
+    const id = typeof itemOrId === 'object' ? itemOrId.id : itemOrId;
     setComparePlaylists(prev => {
-      if (prev.includes(id)) {
+      const exists = prev.some(i => (typeof i === 'object' ? i.id : i) === id);
+      if (exists) {
         showToast(`Removed from playlist comparison`);
-        return prev.filter(i => i !== id);
+        return prev.filter(i => (typeof i === 'object' ? i.id : i) !== id);
       } else {
         if (prev.length >= 4) {
           showToast(`Maximum 4 playlists can be compared`);
           return prev;
         }
         showToast(`Added to playlist comparison`);
-        return [...prev, id];
+        return [...prev, itemOrId];
       }
     });
   };
 
-  const isComparePlaylist = (id) => comparePlaylists.includes(id);
+  const isComparePlaylist = (id) => comparePlaylists.some(i => (typeof i === 'object' ? i.id : i) === id);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');

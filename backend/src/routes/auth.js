@@ -350,7 +350,7 @@ router.post("/google", authLimiter, async (req, res) => {
 router.get("/me", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, name, username, email, token_version, avatar_data AS "avatarData", favorite_category AS "favoriteCategory"
+      `SELECT id, name, username, email, token_version, avatar_data AS "avatarData", favorite_category AS "favoriteCategory", interests
        FROM users WHERE id = $1`,
       [req.user.id]
     );
@@ -366,6 +366,25 @@ router.get("/me", requireAuth, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Could not load account" });
+  }
+});
+
+// PUT /api/auth/interests  { interests: string[] }
+router.put("/interests", requireAuth, async (req, res) => {
+  const { interests } = req.body;
+  if (!Array.isArray(interests)) {
+    return res.status(400).json({ error: "interests must be an array of strings" });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE users SET interests = $1 WHERE id = $2 RETURNING id, name, username, email, avatar_data AS "avatarData", favorite_category AS "favoriteCategory", interests`,
+      [interests, req.user.id]
+    );
+    res.json({ user: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Could not save interests" });
   }
 });
 

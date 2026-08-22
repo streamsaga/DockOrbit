@@ -9,8 +9,14 @@ export default function ComparePage() {
   const [mode, setMode] = useState('channels'); // 'channels' | 'playlists'
   const { compareChannels, comparePlaylists, toggleCompareChannel, toggleComparePlaylist } = useApp();
 
-  const selectedChannels = CHANNELS.filter(c => compareChannels.includes(c.id));
-  const selectedPlaylists = PLAYLISTS.filter(p => comparePlaylists.includes(p.id));
+  const selectedChannels = compareChannels.map(item => {
+    if (typeof item === 'object' && item !== null) return item;
+    return CHANNELS.find(c => c.id === item) || { id: item, name: 'Selected Channel', qualityScore: 85 };
+  });
+  const selectedPlaylists = comparePlaylists.map(item => {
+    if (typeof item === 'object' && item !== null) return item;
+    return PLAYLISTS.find(p => p.id === item) || { id: item, title: 'Selected Playlist', qualityScore: 85 };
+  });
 
   const items = mode === 'channels'
     ? (selectedChannels.length > 0 ? selectedChannels : CHANNELS.slice(0, 3))

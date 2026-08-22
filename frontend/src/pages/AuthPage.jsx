@@ -8,10 +8,24 @@ const MODES = {
   LOGIN: 'login',
   SIGNUP: 'signup',
   VERIFY_SIGNUP: 'verify-signup',
+  INTERESTS: 'interests',
   FORGOT_EMAIL: 'forgot-email',
   FORGOT_OTP: 'forgot-otp',
   RESET_PASSWORD: 'reset-password'
 };
+
+const AVAILABLE_INTERESTS = [
+  { id: 'Programming', label: '💻 Programming & Code' },
+  { id: 'Cybersecurity', label: '🛡️ Cybersecurity & Hacking' },
+  { id: 'Technology', label: '⚡ Tech & Reviews' },
+  { id: 'Education', label: '🎓 Education & Tutorials' },
+  { id: 'Design', label: '🎨 Design & UI/UX' },
+  { id: 'Finance', label: '📈 Finance & Investing' },
+  { id: 'Science', label: '🔬 Science & Math' },
+  { id: 'Business', label: '💼 Business & Startups' },
+  { id: 'Gaming', label: '🎮 Gaming & Streams' },
+  { id: 'Entertainment', label: '🎬 Movies & Commentary' }
+];
 
 export default function AuthPage() {
   const [mode, setMode] = useState(MODES.LOGIN);
@@ -28,6 +42,9 @@ export default function AuthPage() {
   const [otpCode, setOtpCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
+  // Interests onboarding fields
+  const [selectedInterests, setSelectedInterests] = useState([]);
+
   // Password reset fields
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -39,7 +56,7 @@ export default function AuthPage() {
   const fileInputRef = useRef(null);
   const googleBtnRef = useRef(null);
   const navigate = useNavigate();
-  const { login, signup, verifySignupOtp, resendOtp, forgotPassword, resetPassword, loginWithGoogle } = useAuth();
+  const { login, signup, verifySignupOtp, resendOtp, forgotPassword, resetPassword, loginWithGoogle, updateInterests } = useAuth();
   const { showToast } = useToast();
 
   const handleGoogleResponse = async (response) => {
@@ -53,7 +70,7 @@ export default function AuthPage() {
         return;
       }
       showToast('Signed in with Google!', 'success');
-      navigate('/user-dashboard');
+      setMode(MODES.INTERESTS);
     } catch (err) {
       setErrorMsg(err.message || 'Google sign-in failed');
     }
@@ -186,10 +203,32 @@ export default function AuthPage() {
     setSubmitting(true);
     try {
       await verifySignupOtp(email, otpCode);
-      showToast('Email verified! Welcome to DockOrbit.', 'success');
-      navigate('/user-dashboard');
+      showToast('Email verified! Customize your interests.', 'success');
+      setMode(MODES.INTERESTS);
     } catch (err) {
       setErrorMsg(err.message || 'Invalid or expired code. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const toggleInterest = (id) => {
+    setSelectedInterests(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleSaveInterests = async () => {
+    setSubmitting(true);
+    try {
+      if (selectedInterests.length > 0) {
+        await updateInterests(selectedInterests);
+        showToast('Interests saved! Your feed is personalized.', 'success');
+      }
+      navigate('/user-dashboard');
+    } catch (err) {
+      console.warn('Interests update error:', err.message);
+      navigate('/user-dashboard');
     } finally {
       setSubmitting(false);
     }
@@ -274,7 +313,7 @@ export default function AuthPage() {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 140px)', padding: '20px' }}>
-      <div className="soft-card-static" style={{ width: '100%', maxWidth: '460px', padding: '36px 32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div className="soft-card-static" style={{ width: '100%', maxWidth: mode === MODES.INTERESTS ? '560px' : '460px', padding: '36px 32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         {/* Brand */}
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#4F46E5', margin: 0, letterSpacing: '-0.03em' }}>
@@ -285,7 +324,7 @@ export default function AuthPage() {
           </p>
         </div>
 
-        {/* Tab Toggle (Only show on LOGIN / SIGNUP modes) */}
+        {/* Tab Toggle */}
         {(mode === MODES.LOGIN || mode === MODES.SIGNUP) && (
           <div style={{ display: 'flex', background: 'var(--bg-surface-soft)', padding: '4px', borderRadius: '10px' }}>
             <button
@@ -386,7 +425,6 @@ export default function AuthPage() {
         {/* ── MODE 2: SIGNUP ── */}
         {mode === MODES.SIGNUP && (
           <form onSubmit={handleSignupSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Profile Picture Upload Section */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
               <div
                 onClick={() => fileInputRef.current?.click()}
@@ -511,36 +549,77 @@ export default function AuthPage() {
                   style={{ border: 'none', background: 'none', outline: 'none', color: 'var(--text-main)', fontSize: '22px', textAlign: 'center', letterSpacing: '0.25em', fontWeight: 900, width: '100%' }}
                 />
               </div>
-              <span style={{ fontSize: '11.5px', color: 'var(--text-subtle)', textAlign: 'center' }}>
-                Code expires in ~10 minutes
-              </span>
             </div>
 
             <button type="submit" disabled={submitting} className="soft-btn-primary" style={{ padding: '12px', fontSize: '14px', justifyContent: 'center', marginTop: '8px' }}>
-              {submitting ? 'Verifying...' : 'Verify Code & Complete Setup'}
+              {submitting ? 'Verifying...' : 'Verify Code & Set Interests →'}
             </button>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px' }}>
-              <button
-                type="button"
-                onClick={() => setMode(MODES.SIGNUP)}
-                style={{ fontSize: '12.5px', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                ← Back to Edit
-              </button>
-              <button
-                type="button"
-                disabled={resendCooldown > 0}
-                onClick={handleResendSignupCode}
-                style={{ fontSize: '12.5px', color: resendCooldown > 0 ? 'var(--text-subtle)' : 'var(--primary)', fontWeight: 700, background: 'none', border: 'none', cursor: resendCooldown > 0 ? 'default' : 'pointer' }}
-              >
-                {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
-              </button>
-            </div>
           </form>
         )}
 
-        {/* ── MODE 4: FORGOT PASSWORD - EMAIL ── */}
+        {/* ── MODE 4: INTERESTS ONBOARDING ── */}
+        {mode === MODES.INTERESTS && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ fontSize: '32px' }}>🎯</span>
+              <h3 style={{ fontSize: '20px', fontWeight: 900, color: 'var(--text-main)', margin: '6px 0 4px 0' }}>
+                Choose Your Interests
+              </h3>
+              <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', margin: 0 }}>
+                Select topics to personalize your recommendations feed.
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '10px' }}>
+              {AVAILABLE_INTERESTS.map((item) => {
+                const isSelected = selectedInterests.includes(item.id);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => toggleInterest(item.id)}
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      border: isSelected ? '2px solid #4F46E5' : '1.5px solid var(--border-light)',
+                      background: isSelected ? 'var(--primary-light)' : 'var(--bg-surface)',
+                      color: isSelected ? 'var(--primary)' : 'var(--text-main)',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {item.label} {isSelected && '✓'}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginTop: '12px' }}>
+              <button
+                type="button"
+                onClick={() => navigate('/user-dashboard')}
+                style={{ fontSize: '13px', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
+              >
+                Skip for now →
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveInterests}
+                disabled={submitting}
+                className="soft-btn-primary"
+                style={{ padding: '10px 24px', fontSize: '13.5px' }}
+              >
+                {submitting ? 'Saving...' : `Save (${selectedInterests.length} selected)`}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── MODE 5: FORGOT PASSWORD - EMAIL ── */}
         {mode === MODES.FORGOT_EMAIL && (
           <form onSubmit={handleForgotEmailSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ textAlign: 'center' }}>
@@ -580,7 +659,7 @@ export default function AuthPage() {
           </form>
         )}
 
-        {/* ── MODE 5: FORGOT PASSWORD - OTP VERIFICATION ── */}
+        {/* ── MODE 6: FORGOT PASSWORD - OTP ── */}
         {mode === MODES.FORGOT_OTP && (
           <form onSubmit={handleForgotOtpSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ textAlign: 'center' }}>
@@ -612,28 +691,10 @@ export default function AuthPage() {
             <button type="submit" className="soft-btn-primary" style={{ padding: '12px', fontSize: '14px', justifyContent: 'center', marginTop: '8px' }}>
               Continue to Set New Password →
             </button>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px' }}>
-              <button
-                type="button"
-                onClick={() => setMode(MODES.FORGOT_EMAIL)}
-                style={{ fontSize: '12.5px', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                ← Change Email
-              </button>
-              <button
-                type="button"
-                disabled={resendCooldown > 0}
-                onClick={handleResendSignupCode}
-                style={{ fontSize: '12.5px', color: resendCooldown > 0 ? 'var(--text-subtle)' : 'var(--primary)', fontWeight: 700, background: 'none', border: 'none', cursor: resendCooldown > 0 ? 'default' : 'pointer' }}
-              >
-                {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
-              </button>
-            </div>
           </form>
         )}
 
-        {/* ── MODE 6: SET NEW PASSWORD ── */}
+        {/* ── MODE 7: SET NEW PASSWORD ── */}
         {mode === MODES.RESET_PASSWORD && (
           <form onSubmit={handleResetPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ textAlign: 'center' }}>

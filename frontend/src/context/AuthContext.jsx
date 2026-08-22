@@ -157,6 +157,22 @@ export function AuthProvider({ children }) {
     return data;
   }
 
+  async function updateInterests(interests) {
+    if (!token) return;
+    const res = await fetch("/api/auth/interests", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ interests }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to update interests");
+    setUser((prev) => ({ ...prev, interests: data.user?.interests || interests }));
+    return data;
+  }
+
   function logout() {
     localStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
@@ -178,6 +194,7 @@ export function AuthProvider({ children }) {
         forgotPassword,
         resetPassword,
         loginWithGoogle,
+        updateInterests,
         logout,
       }}
     >
