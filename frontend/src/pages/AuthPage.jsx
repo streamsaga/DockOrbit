@@ -37,9 +37,44 @@ export default function AuthPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const fileInputRef = useRef(null);
+  const googleBtnRef = useRef(null);
   const navigate = useNavigate();
-  const { login, signup, verifySignupOtp, resendOtp, forgotPassword, resetPassword } = useAuth();
+  const { login, signup, verifySignupOtp, resendOtp, forgotPassword, resetPassword, loginWithGoogle } = useAuth();
   const { showToast } = useToast();
+
+  const handleGoogleResponse = async (response) => {
+    setErrorMsg('');
+    try {
+      const data = await loginWithGoogle(response.credential);
+      if (data.requiresVerification) {
+        setEmail(data.email);
+        setMode(MODES.VERIFY_SIGNUP);
+        showToast(`Verification code sent to ${data.email}`, 'info');
+        return;
+      }
+      showToast('Signed in with Google!', 'success');
+      navigate('/user-dashboard');
+    } catch (err) {
+      setErrorMsg(err.message || 'Google sign-in failed');
+    }
+  };
+
+  useEffect(() => {
+    if (mode !== MODES.LOGIN && mode !== MODES.SIGNUP) return;
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    if (window.google?.accounts?.id && googleBtnRef.current && clientId) {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleGoogleResponse,
+      });
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: '320',
+      });
+    }
+  }, [mode]);
 
   useEffect(() => {
     let timer;
@@ -336,6 +371,15 @@ export default function AuthPage() {
             <button type="submit" disabled={submitting} className="soft-btn-primary" style={{ padding: '12px', fontSize: '14px', justifyContent: 'center', marginTop: '8px' }}>
               {submitting ? 'Signing in...' : 'Sign In'}
             </button>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center', marginTop: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '12px' }}>
+                <div style={{ flex: 1, height: '1px', background: 'var(--border-light)' }} />
+                <span style={{ fontSize: '11.5px', color: 'var(--text-subtle)', fontWeight: 600 }}>OR</span>
+                <div style={{ flex: 1, height: '1px', background: 'var(--border-light)' }} />
+              </div>
+              <div ref={googleBtnRef} style={{ width: '100%', display: 'flex', justifyContent: 'center' }} />
+            </div>
           </form>
         )}
 

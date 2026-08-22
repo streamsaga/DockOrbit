@@ -1,9 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CHANNELS } from '../data/dockorbitData.js';
 import ChannelCard from '../components/ChannelCard.jsx';
 import FilterBar from '../components/FilterBar.jsx';
-
-const PAGE_SIZE = 6;
 
 export default function ChannelDiscoveryPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -13,40 +11,79 @@ export default function ChannelDiscoveryPage() {
   const [sortBy, setSortBy] = useState('Quality');
   const [viewMode, setViewMode] = useState('grid');
 
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [channels, setChannels] = useState([]);
+  const [nextPageToken, setNextPageToken] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const filteredChannels = useMemo(() => {
-    return CHANNELS.filter(ch => {
-      const matchesSearch = ch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            ch.category.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCat = selectedCategory === 'All' || ch.category === selectedCategory;
-      const matchesCountry = selectedCountry === 'All' || ch.country === selectedCountry;
-      const matchesScore = (ch.qualityScore || ch.trustScore || 0) >= parseInt(minScore);
+  const fetchChannels = useCallback(async (isLoadMore = false, token = '') => {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
 
-      return matchesSearch && matchesCat && matchesCountry && matchesScore;
-    }).sort((a, b) => {
-      if (sortBy === 'Quality') return (b.qualityScore || 0) - (a.qualityScore || 0);
-      if (sortBy === 'Most Engaged') return (b.engagementValue || 0) - (a.engagementValue || 0);
-      if (sortBy === 'Most Viewed') return (b.avgViewsCount || 0) - (a.avgViewsCount || 0);
-      if (sortBy === 'Fast Growing') return (b.subscribersCount || 0) - (a.subscribersCount || 0);
-      if (sortBy === 'Most Consistent') return (b.consistencyScore || 0) - (a.consistencyScore || 0);
-      return 0;
-    });
+    try {
+      let endpoint = '';
+      const params = new URLSearchParams();
+
+      if (searchQuery.trim()) {
+        endpoint = '/api/search';
+        params.append('q', searchQuery.trim());
+      } else {
+        endpoint = '/api/channels';
+        const catSlug = selectedCategory === 'All' ? 'tech-reviews' : selectedCategory.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        params.append('category', catSlug);
+      }
+
+      if (sortBy === 'Fast Growing') params.append('sort', 'subscribers');
+      if (sortBy === 'Most Consistent') params.append('sort', 'recent');
+      if (token) params.append('pageToken', token);
+
+      const res = await fetch(`${endpoint}?${params.toString()}`);
+      if (!res.ok) throw new Error('API fetch failed');
+      const data = await res.json();
+
+      const fetchedChannels = data.channels || [];
+      const tokenReceived = data.nextPageToken || null;
+
+      if (isLoadMore) {
+        setChannels(prev => [...prev, ...fetchedChannels]);
+      } else {
+        setChannels(fetchedChannels.length > 0 ? fetchedChannels : CHANNELS);
+      }
+      setNextPageToken(tokenReceived);
+    } catch (err) {
+      console.warn('Backend API fetch error, using local dataset fallback:', err.message);
+      if (!isLoadMore) {
+        // Fallback to local dataset
+        let filtered = CHANNELS.filter(ch => {
+          const matchesSearch = !searchQuery || ch.name.toLowerCase().includes(searchQuery.toLowerCase()) || ch.category.toLowerCase().includes(searchQuery.toLowerCase());
+          const matchesCat = selectedCategory === 'All' || ch.category === selectedCategory;
+          const matchesCountry = selectedCountry === 'All' || ch.country === selectedCountry;
+          const matchesScore = (ch.qualityScore || 0) >= parseInt(minScore);
+          return matchesSearch && matchesCat && matchesCountry && matchesScore;
+        });
+        setChannels(filtered);
+        setNextPageToken(null);
+      }
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   }, [searchQuery, selectedCategory, selectedCountry, minScore, sortBy]);
 
-  const visibleChannels = useMemo(() => {
-    return filteredChannels.slice(0, visibleCount);
-  }, [filteredChannels, visibleCount]);
-
-  const hasMore = visibleCount < filteredChannels.length;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchChannels(false, '');
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [fetchChannels]);
 
   const handleLoadMore = () => {
-    setLoadingMore(true);
-    setTimeout(() => {
-      setVisibleCount(prev => prev + PAGE_SIZE);
-      setLoadingMore(false);
-    }, 350);
+    if (nextPageToken) {
+      fetchChannels(true, nextPageToken);
+    }
   };
 
   return (
@@ -61,7 +98,7 @@ export default function ChannelDiscoveryPage() {
             </h1>
           </div>
           <p style={{ fontSize: '15px', color: 'var(--text-muted)', margin: '6px 0 0 0' }}>
-            Browse YouTube channels ranked by objective quality, engagement rates, and content consistency.
+            Browse live YouTube channels ranked by objective quality, engagement rates, and content consistency.
           </p>
         </div>
 
@@ -98,27 +135,35 @@ export default function ChannelDiscoveryPage() {
         onSortChange={setSortBy}
       />
 
-      {/* Grid or List Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(280px, 1fr))' : '1fr', gap: '20px' }}>
-        {visibleChannels.length > 0 ? (
-          visibleChannels.map((channel, idx) => (
-            <ChannelCard key={channel.id} channel={channel} rank={idx + 1} />
-          ))
-        ) : (
-          <div className="soft-card-static" style={{ padding: '48px', textAlign: 'center', gridColumn: '1 / -1' }}>
-            <span style={{ fontSize: '32px' }}>🔍</span>
-            <h3 style={{ margin: '12px 0 6px 0', fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
-              No channels match your filters
-            </h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
-              Try adjusting your category, quality score, or search keywords.
-            </p>
-          </div>
-        )}
-      </div>
+      {/* Loading State */}
+      {loading ? (
+        <div className="soft-card-static" style={{ padding: '48px', textAlign: 'center' }}>
+          <span style={{ fontSize: '28px' }}>⏳</span>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '8px' }}>Fetching real YouTube channel data...</p>
+        </div>
+      ) : (
+        /* Grid or List Layout */
+        <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(280px, 1fr))' : '1fr', gap: '20px' }}>
+          {channels.length > 0 ? (
+            channels.map((channel, idx) => (
+              <ChannelCard key={channel.id || idx} channel={channel} rank={idx + 1} />
+            ))
+          ) : (
+            <div className="soft-card-static" style={{ padding: '48px', textAlign: 'center', gridColumn: '1 / -1' }}>
+              <span style={{ fontSize: '32px' }}>🔍</span>
+              <h3 style={{ margin: '12px 0 6px 0', fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
+                No channels match your query
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
+                Try searching for a different keyword like "coding", "physics", or "cooking".
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Load More Button */}
-      {hasMore && (
+      {nextPageToken && !loading && (
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
           <button
             onClick={handleLoadMore}
@@ -126,7 +171,7 @@ export default function ChannelDiscoveryPage() {
             className="soft-btn-primary"
             style={{ padding: '12px 28px', fontSize: '14px', minWidth: '180px', justifyContent: 'center' }}
           >
-            {loadingMore ? 'Loading...' : `Load More Channels (${filteredChannels.length - visibleCount} remaining)`}
+            {loadingMore ? 'Loading Next Batch...' : 'Load More Channels →'}
           </button>
         </div>
       )}

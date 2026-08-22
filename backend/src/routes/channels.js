@@ -6,7 +6,9 @@ import { fetchChannelsForCategory, fetchChannelsForQuery } from "../services/you
 const router = express.Router();
 
 function useMockData() {
-  return process.env.USE_MOCK_DATA !== "false";
+  if (process.env.USE_MOCK_DATA === "true") return true;
+  if (process.env.USE_MOCK_DATA === "false") return false;
+  return !process.env.YOUTUBE_API_KEY;
 }
 
 function applySort(scored, sort) {

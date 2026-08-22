@@ -261,7 +261,9 @@ export async function getTopComments(videoIds, maxPerVideo = 15, maxVideos = 5) 
 import { searchMockPlaylists } from "../data/mockChannels.js";
 
 function useMockData() {
-  return process.env.USE_MOCK_DATA !== "false";
+  if (process.env.USE_MOCK_DATA === "true") return true;
+  if (process.env.USE_MOCK_DATA === "false") return false;
+  return !process.env.YOUTUBE_API_KEY;
 }
 
 export async function findPlaylists(query, pageToken = "", language = "") {

@@ -1,40 +1,72 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PLAYLISTS } from '../data/dockorbitData.js';
 import PlaylistCard from '../components/PlaylistCard.jsx';
-
-const PAGE_SIZE = 6;
 
 export default function PlaylistDiscoveryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [playlists, setPlaylists] = useState([]);
+  const [nextPageToken, setNextPageToken] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const filteredPlaylists = useMemo(() => {
-    return PLAYLISTS.filter(pl => {
-      const matchesSearch = pl.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            pl.creator.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            (pl.topicsCovered && pl.topicsCovered.some(t => t.name.toLowerCase().includes(searchQuery.toLowerCase())));
-      const matchesDiff = selectedDifficulty === 'All' || pl.difficulty.includes(selectedDifficulty);
-      const matchesCat = selectedCategory === 'All' || pl.category === selectedCategory;
-      return matchesSearch && matchesDiff && matchesCat;
-    });
+  const fetchPlaylists = useCallback(async (isLoadMore = false, token = '') => {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      const q = searchQuery.trim() || (selectedCategory !== 'All' ? selectedCategory : 'programming full course');
+      const params = new URLSearchParams({ q });
+      if (token) params.append('pageToken', token);
+
+      const res = await fetch(`/api/playlists/search?${params.toString()}`);
+      if (!res.ok) throw new Error('Playlist search failed');
+      const data = await res.json();
+
+      const fetchedPlaylists = data.playlists || [];
+      const tokenReceived = data.nextPageToken || null;
+
+      if (isLoadMore) {
+        setPlaylists(prev => [...prev, ...fetchedPlaylists]);
+      } else {
+        setPlaylists(fetchedPlaylists.length > 0 ? fetchedPlaylists : PLAYLISTS);
+      }
+      setNextPageToken(tokenReceived);
+    } catch (err) {
+      console.warn('YouTube Playlist API error, using local fallback:', err.message);
+      if (!isLoadMore) {
+        let filtered = PLAYLISTS.filter(pl => {
+          const matchesSearch = !searchQuery || pl.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                pl.creator.toLowerCase().includes(searchQuery.toLowerCase());
+          const matchesDiff = selectedDifficulty === 'All' || pl.difficulty.includes(selectedDifficulty);
+          const matchesCat = selectedCategory === 'All' || pl.category === selectedCategory;
+          return matchesSearch && matchesDiff && matchesCat;
+        });
+        setPlaylists(filtered);
+        setNextPageToken(null);
+      }
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   }, [searchQuery, selectedDifficulty, selectedCategory]);
 
-  const visiblePlaylists = useMemo(() => {
-    return filteredPlaylists.slice(0, visibleCount);
-  }, [filteredPlaylists, visibleCount]);
-
-  const hasMore = visibleCount < filteredPlaylists.length;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchPlaylists(false, '');
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [fetchPlaylists]);
 
   const handleLoadMore = () => {
-    setLoadingMore(true);
-    setTimeout(() => {
-      setVisibleCount(prev => prev + PAGE_SIZE);
-      setLoadingMore(false);
-    }, 350);
+    if (nextPageToken) {
+      fetchPlaylists(true, nextPageToken);
+    }
   };
 
   return (
@@ -48,7 +80,7 @@ export default function PlaylistDiscoveryPage() {
           </h1>
         </div>
         <p style={{ fontSize: '15px', color: 'var(--text-muted)', margin: '6px 0 0 0' }}>
-          Curated learning roadmaps evaluated for topic depth, pacing, and estimated completion times.
+          Curated YouTube learning roadmaps evaluated for topic depth, pacing, and estimated completion times.
         </p>
       </div>
 
@@ -58,7 +90,7 @@ export default function PlaylistDiscoveryPage() {
           <span style={{ color: 'var(--text-subtle)' }}>🔍</span>
           <input
             type="text"
-            placeholder="Search playlists, topics (e.g. React, Docker)..."
+            placeholder="Search YouTube playlists (e.g. React, Python, Math)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{ border: 'none', background: 'none', outline: 'none', color: 'var(--text-main)', fontSize: '13.5px', width: '100%' }}
@@ -92,15 +124,35 @@ export default function PlaylistDiscoveryPage() {
         </div>
       </div>
 
-      {/* Playlist Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
-        {visiblePlaylists.map((playlist) => (
-          <PlaylistCard key={playlist.id} playlist={playlist} />
-        ))}
-      </div>
+      {/* Loading State */}
+      {loading ? (
+        <div className="soft-card-static" style={{ padding: '48px', textAlign: 'center' }}>
+          <span style={{ fontSize: '28px' }}>⏳</span>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '8px' }}>Fetching real YouTube playlist data...</p>
+        </div>
+      ) : (
+        /* Playlist Grid */
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+          {playlists.length > 0 ? (
+            playlists.map((playlist, idx) => (
+              <PlaylistCard key={playlist.id || idx} playlist={playlist} />
+            ))
+          ) : (
+            <div className="soft-card-static" style={{ padding: '48px', textAlign: 'center', gridColumn: '1 / -1' }}>
+              <span style={{ fontSize: '32px' }}>🔍</span>
+              <h3 style={{ margin: '12px 0 6px 0', fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
+                No playlists found for your search
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '14px', margin: 0 }}>
+                Try searching for topics like "JavaScript full course", "Data Structures", or "Calculus".
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Load More Button */}
-      {hasMore && (
+      {nextPageToken && !loading && (
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
           <button
             onClick={handleLoadMore}
@@ -108,7 +160,7 @@ export default function PlaylistDiscoveryPage() {
             className="soft-btn-primary"
             style={{ padding: '12px 28px', fontSize: '14px', minWidth: '180px', justifyContent: 'center' }}
           >
-            {loadingMore ? 'Loading...' : `Load More Playlists (${filteredPlaylists.length - visibleCount} remaining)`}
+            {loadingMore ? 'Loading Next Batch...' : 'Load More Playlists →'}
           </button>
         </div>
       )}
