@@ -22,31 +22,31 @@ export default function HomePage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
       {/* Hero Section */}
-      <section className="soft-card-static" style={{ padding: '56px 36px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', background: 'linear-gradient(180deg, var(--bg-surface) 0%, var(--primary-light) 100%)' }}>
+      <section className="soft-card-static hero-card" style={{ padding: '56px 36px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', background: 'linear-gradient(180deg, var(--bg-surface) 0%, var(--primary-light) 100%)' }}>
         <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.1em', background: 'var(--bg-surface)', padding: '6px 14px', borderRadius: '9999px', boxShadow: 'var(--shadow-soft-sm)' }}>
           Data-Driven Content Intelligence
         </span>
 
-        <h1 style={{ fontSize: '42px', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.03em', lineHeight: 1.15, maxWidth: '800px' }}>
+        <h1 className="hero-heading" style={{ fontSize: '42px', fontWeight: 900, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.03em', lineHeight: 1.15, maxWidth: '800px' }}>
           Discover Better YouTube Content
         </h1>
 
-        <p style={{ fontSize: '18px', color: 'var(--text-muted)', margin: 0, maxWidth: '620px', lineHeight: 1.5 }}>
+        <p className="hero-sub" style={{ fontSize: '18px', color: 'var(--text-muted)', margin: 0, maxWidth: '620px', lineHeight: 1.5 }}>
           Find high-value channels and playlists worth your time using objective 0–100 reliability scores instead of vanity metrics alone.
         </p>
 
         {/* Hero Search Bar */}
         <form onSubmit={handleHeroSearch} style={{ width: '100%', maxWidth: '640px', marginTop: '12px' }}>
-          <div className="soft-card" style={{ display: 'flex', alignItems: 'center', padding: '8px 12px 8px 20px', gap: '12px', borderRadius: '16px' }}>
+          <div className="soft-card hero-search-card" style={{ display: 'flex', alignItems: 'center', padding: '8px 12px 8px 20px', gap: '12px', borderRadius: '16px' }}>
             <span style={{ fontSize: '20px', color: 'var(--text-subtle)' }}>🔍</span>
             <input
               type="text"
               placeholder="Search channels, playlists, topics..."
               value={heroSearch}
               onChange={(e) => setHeroSearch(e.target.value)}
-              style={{ border: 'none', background: 'none', outline: 'none', color: 'var(--text-main)', fontSize: '16px', flex: 1 }}
+              style={{ border: 'none', background: 'none', outline: 'none', color: 'var(--text-main)', fontSize: '16px', flex: 1, minWidth: 0 }}
             />
-            <button type="submit" className="soft-btn-primary" style={{ padding: '12px 24px', fontSize: '14px' }}>
+            <button type="submit" className="soft-btn-primary" style={{ padding: '12px 24px', fontSize: '14px', flexShrink: 0 }}>
               Search
             </button>
           </div>

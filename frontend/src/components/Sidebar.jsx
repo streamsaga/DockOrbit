@@ -23,16 +23,13 @@ export default function Sidebar() {
   return (
     <aside className="desktop-sidebar">
       {/* Brand Header */}
-      <div style={{ padding: '24px 20px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border-light)' }}>
-        <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--primary)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '18px', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.35)' }}>
-          DO
-        </div>
-        <div>
-          <h1 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1 }}>
+      <div style={{ padding: '24px 20px', borderBottom: '1px solid var(--border-light)' }}>
+        <Link to="/" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 900, color: '#4F46E5', margin: 0, letterSpacing: '-0.03em', lineHeight: 1.1 }}>
             DockOrbit
           </h1>
           <span style={{ fontSize: '11px', color: 'var(--text-subtle)', fontWeight: 600 }}>Quality Metrics Platform</span>
-        </div>
+        </Link>
       </div>
 
       {/* Main Navigation List */}
@@ -102,15 +99,21 @@ export default function Sidebar() {
 
       {/* Footer Profile & Theme Toggle */}
       <div style={{ padding: '16px', borderTop: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-surface-soft)' }}>
-        <Link to="/user-dashboard" style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
-          <img src={user.avatar} alt={user.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {user.name}
+        {user ? (
+          <Link to="/user-dashboard" style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+            <img src={user.avatarData || user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4F46E5&color=fff`} alt={user.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {user.name}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 600 }}>{user.plan || 'Member'}</div>
             </div>
-            <div style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 600 }}>{user.plan}</div>
-          </div>
-        </Link>
+          </Link>
+        ) : (
+          <Link to="/login" className="soft-btn" style={{ fontSize: '12.5px', padding: '6px 12px' }}>
+            🔑 Sign In
+          </Link>
+        )}
 
         <button
           onClick={toggleTheme}

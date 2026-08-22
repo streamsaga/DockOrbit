@@ -27,11 +27,8 @@ export default function MobileDrawer({ isOpen, onClose }) {
       {/* Drawer Body */}
       <div style={{ position: 'relative', width: '280px', height: '100%', background: 'var(--bg-surface)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px', zIndex: 91, boxShadow: '4px 0 20px rgba(0,0,0,0.2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--primary)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
-              DO
-            </div>
-            <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-main)' }}>DockOrbit</span>
+          <div>
+            <span style={{ fontSize: '20px', fontWeight: 900, color: '#4F46E5', letterSpacing: '-0.02em' }}>DockOrbit</span>
           </div>
           <button onClick={onClose} className="soft-btn" style={{ padding: '6px 10px' }}>✕</button>
         </div>
@@ -61,10 +58,16 @@ export default function MobileDrawer({ isOpen, onClose }) {
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '14px', borderTop: '1px solid var(--border-light)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <img src={user.avatar} alt={user.name} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
-            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)' }}>{user.name}</span>
-          </div>
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img src={user.avatarData || user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4F46E5&color=fff`} alt={user.name} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)' }}>{user.name}</span>
+            </div>
+          ) : (
+            <NavLink to="/login" onClick={onClose} className="soft-btn" style={{ fontSize: '13px' }}>
+              🔑 Sign In
+            </NavLink>
+          )}
           <button onClick={toggleTheme} className="soft-btn" style={{ padding: '6px 10px' }}>
             {theme === 'light' ? '🌙' : '☀️'}
           </button>

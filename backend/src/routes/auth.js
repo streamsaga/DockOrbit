@@ -283,7 +283,7 @@ router.post("/reset-password", authLimiter, async (req, res) => {
     }
 
     const passwordHash = await hashPassword(newPassword);
-    await pool.query("UPDATE users SET password_hash = $1 WHERE email = $2", [
+    await pool.query("UPDATE users SET password_hash = $1, token_version = token_version + 1 WHERE email = $2", [
       passwordHash,
       email,
     ]);
@@ -307,7 +307,7 @@ router.post("/google", authLimiter, async (req, res) => {
     const googleEmail = normalizeEmail(payload.email);
 
     const existing = await pool.query(
-      `SELECT id, name, username, email, email_verified,
+      `SELECT id, name, username, email, email_verified, token_version,
               avatar_data AS "avatarData", favorite_category AS "favoriteCategory"
        FROM users WHERE google_id = $1 OR email = $2`,
       [payload.sub, googleEmail]
@@ -324,19 +324,13 @@ router.post("/google", authLimiter, async (req, res) => {
       const result = await pool.query(
         `INSERT INTO users (name, email, google_id, email_verified)
          VALUES ($1, $2, $3, false)
-         RETURNING id, name, username, email, avatar_data AS "avatarData", favorite_category AS "favoriteCategory"`,
+         RETURNING id, name, username, email, token_version, avatar_data AS "avatarData", favorite_category AS "favoriteCategory"`,
         [payload.name, googleEmail, payload.sub]
       );
       user = result.rows[0];
       alreadyVerified = false;
     }
 
-    // Only a genuinely already-verified account gets an instant login.
-    // Anyone newly created (or an old unverified password-signup
-    // account authenticating via Google for the first time) goes
-    // through the same OTP verification step as regular signup,
-    // rather than skipping straight to logged-in - this keeps the
-    // verification step consistent no matter how the account started.
     if (alreadyVerified) {
       const token = generateToken(user);
       return res.json({ token, user });
@@ -352,23 +346,23 @@ router.post("/google", authLimiter, async (req, res) => {
   }
 });
 
-// GET /api/auth/me  (requires Authorization header) - NOT rate limited
-// like the routes above, since it fires on every normal page load for
-// a logged-in user and is already protected by requiring a valid JWT.
-// Fetches fresh data from the database rather than just echoing the
-// JWT payload, so username/avatar/favoriteCategory are always current
-// even if they were set after the token was issued.
+// GET /api/auth/me
 router.get("/me", requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, name, username, email, avatar_data AS "avatarData", favorite_category AS "favoriteCategory"
+      `SELECT id, name, username, email, token_version, avatar_data AS "avatarData", favorite_category AS "favoriteCategory"
        FROM users WHERE id = $1`,
       [req.user.id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: "Account not found" });
     }
-    res.json({ user: result.rows[0] });
+    const userRow = result.rows[0];
+    if (req.user.tokenVersion && userRow.token_version !== req.user.tokenVersion) {
+      return res.status(401).json({ error: "Session expired or password was reset. Please log in again." });
+    }
+    const { token_version, ...user } = userRow;
+    res.json({ user });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Could not load account" });

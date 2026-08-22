@@ -76,16 +76,25 @@ function codeBlock(code) {
 }
 
 async function sendEmail(to, subject, html) {
-  const t = getTransporter();
   console.log(`[email] Sending "${subject}" to ${to}...`);
-  const info = await t.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
-    to,
-    subject,
-    html,
-  });
-  console.log(`[email] Sent successfully. Message ID: ${info.messageId}`);
-  return info;
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
+    console.log(`[email] Dev mode fallback: SMTP not configured. Content:\n${html}`);
+    return { messageId: "dev-mock-id" };
+  }
+  try {
+    const t = getTransporter();
+    const info = await t.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to,
+      subject,
+      html,
+    });
+    console.log(`[email] Sent successfully. Message ID: ${info.messageId}`);
+    return info;
+  } catch (err) {
+    console.error(`[email] Failed to send email via SMTP: ${err.message}. Email body contained:\n${html}`);
+    return { messageId: "failed-fallback" };
+  }
 }
 
 /**

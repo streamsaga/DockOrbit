@@ -62,9 +62,15 @@ export default function Navbar({ onOpenMobileDrawer }) {
           ⚡ Analyze Link
         </Link>
 
-        <Link to="/user-dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img src={user.avatar} alt={user.name} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary-light)' }} />
-        </Link>
+        {user ? (
+          <Link to="/user-dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <img src={user.avatarData || user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4F46E5&color=fff`} alt={user.name} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary-light)' }} />
+          </Link>
+        ) : (
+          <Link to="/login" className="soft-btn" style={{ padding: '8px 14px', fontSize: '13px' }}>
+            🔑 Sign In
+          </Link>
+        )}
       </div>
 
       <style>{`

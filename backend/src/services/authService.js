@@ -19,13 +19,17 @@ export async function verifyPassword(plainPassword, hash) {
 }
 
 export function generateToken(user) {
-  // Read JWT_SECRET at call time (not module load time) so it's
-  // guaranteed to be loaded from .env by the time this runs - same
-  // fix as the YouTube API key timing bug from earlier.
   const secret = process.env.JWT_SECRET;
-  return jwt.sign({ id: user.id, name: user.name, email: user.email }, secret, {
-    expiresIn: "7d",
-  });
+  return jwt.sign(
+    {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      tokenVersion: user.token_version || user.tokenVersion || 1,
+    },
+    secret,
+    { expiresIn: "7d" }
+  );
 }
 
 export function verifyToken(token) {

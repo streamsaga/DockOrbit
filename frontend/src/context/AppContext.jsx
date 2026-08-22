@@ -1,62 +1,33 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CHANNELS, PLAYLISTS } from '../data/dockorbitData.js';
+import { useAuth } from './AuthContext.jsx';
 
 const AppContext = createContext();
 
 export function AppProvider({ children }) {
+  const auth = useAuth();
   const [bookmarks, setBookmarks] = useState(() => {
     try {
       const saved = localStorage.getItem('dockorbit_bookmarks');
-      return saved ? JSON.parse(saved) : [
-        { id: 'fireship', type: 'channel', savedAt: '2026-08-20' },
-        { id: 'react-full-course-2026', type: 'playlist', savedAt: '2026-08-21' }
-      ];
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return [
-        { id: 'fireship', type: 'channel', savedAt: '2026-08-20' },
-        { id: 'react-full-course-2026', type: 'playlist', savedAt: '2026-08-21' }
-      ];
+      return [];
     }
   });
 
-  const [compareChannels, setCompareChannels] = useState(['fireship', '3blue1brown']);
-  const [comparePlaylists, setComparePlaylists] = useState(['react-full-course-2026', 'linear-algebra-3blue1brown']);
+  const [compareChannels, setCompareChannels] = useState([]);
+  const [comparePlaylists, setComparePlaylists] = useState([]);
 
-  const [recentAnalyzed, setRecentAnalyzed] = useState([
-    {
-      url: 'https://youtube.com/@fireship',
-      name: 'Fireship',
-      type: 'channel',
-      score: 96,
-      date: '10 minutes ago'
-    },
-    {
-      url: 'https://youtube.com/playlist?list=PL0vfts4VzfNiI1BsIK5u7LpdevBOH532E',
-      name: 'React 19 Masterclass',
-      type: 'playlist',
-      score: 95,
-      date: '1 hour ago'
-    }
-  ]);
+  const [recentAnalyzed, setRecentAnalyzed] = useState([]);
 
-  const [recentViewed, setRecentViewed] = useState([
-    { id: 'fireship', type: 'channel', name: 'Fireship', avatar: CHANNELS[0].avatar },
-    { id: '3blue1brown', type: 'channel', name: '3Blue1Brown', avatar: CHANNELS[1].avatar },
-    { id: 'react-full-course-2026', type: 'playlist', title: PLAYLISTS[0].title, thumbnail: PLAYLISTS[0].thumbnail }
-  ]);
+  const [recentViewed, setRecentViewed] = useState([]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [theme, setTheme] = useState(() => localStorage.getItem('dockorbit_theme') || 'light');
   const [toastMessage, setToastMessage] = useState(null);
 
-  const [user, setUser] = useState({
-    name: 'Alex Rivera',
-    email: 'alex.rivera@dockorbit.dev',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80',
-    plan: 'Pro Analyst',
-    interests: ['Programming', 'Cybersecurity', 'Education', 'Science']
-  });
+  const user = auth?.user || null;
 
   useEffect(() => {
     localStorage.setItem('dockorbit_bookmarks', JSON.stringify(bookmarks));

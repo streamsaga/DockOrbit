@@ -7,103 +7,107 @@ import QualityGauge from '../components/QualityGauge.jsx';
 import { useApp } from '../context/AppContext.jsx';
 
 export default function UserDashboardPage() {
-  const { user, bookmarks, recentAnalyzed, recentViewed } = useApp();
+  const { user, bookmarks, recentAnalyzed } = useApp();
 
-  const savedChannels = CHANNELS.filter(c => bookmarks.some(b => b.id === c.id && b.type === 'channel'));
+  const savedChannels = CHANNELS.filter(c => bookmarks.some(b => b.id === c.id && (b.type === 'channel' || !b.type)));
   const savedPlaylists = PLAYLISTS.filter(p => bookmarks.some(b => b.id === p.id && b.type === 'playlist'));
 
-  const recommendedChannels = CHANNELS.filter(c => user.interests.includes(c.category)).slice(0, 2);
+  const recommendedChannels = CHANNELS.slice(0, 2);
   const recommendedPlaylists = PLAYLISTS.slice(0, 2);
 
+  const userAvatar = user?.avatarData || user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=4F46E5&color=fff`;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', width: '100%', maxWidth: '100%' }}>
       {/* User Welcome Banner */}
-      <div className="soft-card-static" style={{ padding: '32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px', background: 'linear-gradient(135deg, var(--bg-surface) 0%, var(--primary-light) 100%)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <img src={user.avatar} alt={user.name} style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)' }} />
-          <div>
+      <div className="soft-card-static" style={{ padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px', background: 'linear-gradient(135deg, var(--bg-surface) 0%, var(--primary-light) 100%)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', minWidth: 0 }}>
+          {user ? (
+            <img src={userAvatar} alt={user.name} style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '3px solid var(--primary)', flexShrink: 0 }} />
+          ) : (
+            <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '24px', flexShrink: 0 }}>
+              👤
+            </div>
+          )}
+          <div style={{ minWidth: 0 }}>
             <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              {user.plan} Account
+              {user ? (user.plan || 'Free Account') : 'Guest Explorer'}
             </span>
-            <h1 style={{ fontSize: '28px', fontWeight: 900, color: 'var(--text-main)', margin: '2px 0 4px 0' }}>
-              Good Morning, {user.name}! 👋
+            <h1 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--text-main)', margin: '2px 0 4px 0', wordBreak: 'break-word' }}>
+              {user ? `Welcome back, ${user.name}! 👋` : 'Welcome to DockOrbit! 👋'}
             </h1>
-            <p style={{ fontSize: '14px', color: 'var(--text-muted)', margin: 0 }}>
-              You have {bookmarks.length} saved library items and 2 active learning roadmaps in progress.
+            <p style={{ fontSize: '13.5px', color: 'var(--text-muted)', margin: 0 }}>
+              {user
+                ? `You have ${bookmarks.length} item${bookmarks.length === 1 ? '' : 's'} saved in your library.`
+                : 'Sign in to sync your saved channels, playlists, and custom analysis.'}
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <Link to="/analyzer" className="soft-btn-primary" style={{ padding: '10px 18px', fontSize: '13.5px' }}>
-            ⚡ Analyze New Link
-          </Link>
-          <Link to="/bookmarks" className="soft-btn" style={{ padding: '10px 18px', fontSize: '13.5px' }}>
-            🔖 View Saved Library
-          </Link>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+          {user ? (
+            <>
+              <Link to="/analyzer" className="soft-btn-primary" style={{ padding: '10px 18px', fontSize: '13.5px' }}>
+                ⚡ Analyze New Link
+              </Link>
+              <Link to="/bookmarks" className="soft-btn" style={{ padding: '10px 18px', fontSize: '13.5px' }}>
+                🔖 View Saved Library ({bookmarks.length})
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="soft-btn-primary" style={{ padding: '10px 18px', fontSize: '13.5px' }}>
+                🔑 Sign In / Account
+              </Link>
+              <Link to="/analyzer" className="soft-btn" style={{ padding: '10px 18px', fontSize: '13.5px' }}>
+                ⚡ Analyze Link
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
       {/* Continue Learning Section */}
       <div className="soft-card-static" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+          <h2 style={{ fontSize: '19px', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
             📖 Continue Learning Progress
           </h2>
-          <span style={{ fontSize: '12.5px', color: 'var(--primary)', fontWeight: 700 }}>2 Courses Active</span>
+          <span style={{ fontSize: '12.5px', color: 'var(--primary)', fontWeight: 700 }}>
+            {savedPlaylists.length > 0 ? `${savedPlaylists.length} Saved Playlists` : '0 Active Courses'}
+          </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '18px' }}>
-          <div className="soft-inset" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--primary)', background: 'var(--primary-light)', padding: '2px 8px', borderRadius: '4px' }}>
-                Intermediate • 65% Completed
-              </span>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>14h 25m total</span>
-            </div>
-            <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
-              Complete React 19 & Next.js App Router Masterclass
-            </h4>
-            <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: 'var(--bg-surface-soft)', overflow: 'hidden' }}>
-              <div style={{ width: '65%', height: '100%', background: 'var(--primary)', borderRadius: '4px' }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-subtle)' }}>Next: Server Actions & Form Handling</span>
-              <Link to="/playlist/react-full-course-2026" className="soft-btn-primary" style={{ padding: '6px 12px', fontSize: '12px' }}>
-                Resume
-              </Link>
-            </div>
+        {savedPlaylists.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '18px' }}>
+            {savedPlaylists.map(pl => (
+              <PlaylistCard key={pl.id} playlist={pl} />
+            ))}
           </div>
-
-          <div className="soft-inset" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#10b981', background: 'var(--success-bg)', padding: '2px 8px', borderRadius: '4px' }}>
-                Beginner • 40% Completed
-              </span>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>3h 40m total</span>
+        ) : (
+          <div className="soft-inset" style={{ padding: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '32px' }}>🎯</span>
+            <div>
+              <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                No active learning roadmaps yet
+              </h4>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0, maxWidth: '480px' }}>
+                Discover top structured playlists in development, science, and design to start tracking your learning progress.
+              </p>
             </div>
-            <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
-              Essence of Linear Algebra (3Blue1Brown)
-            </h4>
-            <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: 'var(--bg-surface-soft)', overflow: 'hidden' }}>
-              <div style={{ width: '40%', height: '100%', background: '#10b981', borderRadius: '4px' }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-subtle)' }}>Next: Matrix Multiplication</span>
-              <Link to="/playlist/linear-algebra-3blue1brown" className="soft-btn-primary" style={{ padding: '6px 12px', fontSize: '12px' }}>
-                Resume
-              </Link>
-            </div>
+            <Link to="/playlists" className="soft-btn-primary" style={{ padding: '8px 16px', fontSize: '13px', marginTop: '4px' }}>
+              Explore Playlists →
+            </Link>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Recommended for You */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+        <h2 style={{ fontSize: '19px', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
           💡 Recommended for You
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
           {recommendedChannels.map(ch => (
             <ChannelCard key={ch.id} channel={ch} />
           ))}
@@ -115,21 +119,38 @@ export default function UserDashboardPage() {
 
       {/* Saved Channels & Playlists */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+          <h2 style={{ fontSize: '19px', fontWeight: 800, color: 'var(--text-main)', margin: 0 }}>
             🔖 Your Saved Library Overview
           </h2>
           <Link to="/bookmarks" className="soft-btn" style={{ fontSize: '13px' }}>Manage Library →</Link>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
-          {savedChannels.slice(0, 2).map(ch => (
-            <ChannelCard key={ch.id} channel={ch} />
-          ))}
-          {savedPlaylists.slice(0, 1).map(pl => (
-            <PlaylistCard key={pl.id} playlist={pl} />
-          ))}
-        </div>
+        {savedChannels.length > 0 || savedPlaylists.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+            {savedChannels.slice(0, 2).map(ch => (
+              <ChannelCard key={ch.id} channel={ch} />
+            ))}
+            {savedPlaylists.slice(0, 2).map(pl => (
+              <PlaylistCard key={pl.id} playlist={pl} />
+            ))}
+          </div>
+        ) : (
+          <div className="soft-inset" style={{ padding: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '32px' }}>📚</span>
+            <div>
+              <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', margin: '0 0 4px 0' }}>
+                Your saved library is empty
+              </h4>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>
+                Bookmark channels or playlists while browsing to build your personal learning library.
+              </p>
+            </div>
+            <Link to="/channels" className="soft-btn" style={{ padding: '8px 16px', fontSize: '13px' }}>
+              Browse Channels
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Recently Analyzed Links */}
@@ -140,7 +161,7 @@ export default function UserDashboardPage() {
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {recentAnalyzed.map((item, idx) => (
-              <div key={idx} className="soft-inset" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <div key={idx} className="soft-inset" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
                 <div>
                   <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)', margin: '0 0 2px 0' }}>
                     {item.name}
