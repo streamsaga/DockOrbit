@@ -69,14 +69,8 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <AppProvider>
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
-        </AppProvider>
-      </AuthProvider>
-    </ToastProvider>
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }
