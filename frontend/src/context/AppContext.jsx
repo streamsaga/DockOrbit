@@ -28,6 +28,7 @@ export function AppProvider({ children }) {
   const [toastMessage, setToastMessage] = useState(null);
 
   const user = auth?.user || null;
+  const setUser = () => {};
 
   useEffect(() => {
     localStorage.setItem('dockorbit_bookmarks', JSON.stringify(bookmarks));
